@@ -30,6 +30,8 @@ export const DISCIPLINE_IDS = Object.keys(DISCIPLINES) as DisciplineId[];
 
 export interface Effort {
   label: string;
+  /** How the effort feels, so the athlete picks by effort, not by session length. */
+  hint: string;
   /** The model intensity this workout is planned at. */
   workout: Workout;
   /** Disciplines that offer it. */
@@ -42,16 +44,15 @@ const RUN_ALL = ["run-road", "run-trail", "run-treadmill"] as const;
 const RUN_OUTDOOR = ["run-road", "run-trail"] as const;
 
 export const EFFORTS = {
-  "bike-z2": { label: "Zone 2", workout: "z2", disciplines: BIKE_ALL },
-  "bike-endurance": { label: "Endurance", workout: "endurance", disciplines: BIKE_ALL },
-  "bike-intervals": { label: "Tempo / intervals", workout: "tempo", disciplines: BIKE_ALL },
-  "bike-fondo": { label: "Gran fondo", workout: "endurance", disciplines: ["bike-road", "bike-gravel"] },
-  "bike-race": { label: "Race", workout: "race", disciplines: BIKE_OUTDOOR },
-  "run-easy": { label: "Easy", workout: "z2", disciplines: RUN_ALL },
-  "run-long": { label: "Long run", workout: "endurance", disciplines: RUN_ALL },
-  "run-tempo": { label: "Tempo / intervals", workout: "tempo", disciplines: RUN_ALL },
-  "run-ultra": { label: "Ultra", workout: "ultra", disciplines: ["run-trail"] },
-  "run-race": { label: "Race", workout: "race", disciplines: RUN_OUTDOOR },
+  "bike-z2": { label: "Easy", hint: "Zone 2: you can talk in full sentences", workout: "z2", disciplines: BIKE_ALL },
+  "bike-steady": { label: "Steady", hint: "Comfortably hard, a group ride or sportive pace", workout: "endurance", disciplines: BIKE_ALL },
+  "bike-intervals": { label: "Tempo / intervals", hint: "Hard efforts at threshold or above, with recoveries", workout: "tempo", disciplines: BIKE_ALL },
+  "bike-race": { label: "Race", hint: "Racing: as hard as you can hold for the distance", workout: "race", disciplines: BIKE_OUTDOOR },
+  "run-easy": { label: "Easy", hint: "Conversational pace, most long runs", workout: "z2", disciplines: RUN_ALL },
+  "run-steady": { label: "Steady", hint: "Comfortably hard, around marathon effort", workout: "endurance", disciplines: RUN_ALL },
+  "run-tempo": { label: "Tempo / intervals", hint: "Hard efforts at threshold or above, with recoveries", workout: "tempo", disciplines: RUN_ALL },
+  "run-ultra": { label: "Ultra", hint: "Many hours on trail, mixing running and hiking", workout: "ultra", disciplines: ["run-trail"] },
+  "run-race": { label: "Race", hint: "Racing: as hard as you can hold for the distance", workout: "race", disciplines: RUN_OUTDOOR },
 } as const satisfies Record<string, Effort>;
 export type EffortId = keyof typeof EFFORTS;
 export const EFFORT_IDS = Object.keys(EFFORTS) as EffortId[];

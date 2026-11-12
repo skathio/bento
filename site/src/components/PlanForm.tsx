@@ -154,7 +154,10 @@ export default function PlanForm({ session, onChange }: { session: Session; onCh
       <div className="flex flex-col gap-3">
         <ActivityPicker value={activity} onChange={(a) => a !== activity && pickDiscipline(DEFAULT_DISCIPLINE[a])} />
         <Segmented label={`${ACTIVITY_LABEL[activity]} type`} value={session.discipline} options={disciplinesOf(activity)} labels={DISCIPLINE_LABEL} onChange={pickDiscipline} />
-        <Segmented label="Workout" value={session.effort} options={effortsFor(session.discipline)} labels={EFFORT_LABEL} onChange={(effort) => onChange({ effort })} />
+        <div className="flex flex-col gap-1">
+          <Segmented label="Workout" value={session.effort} options={effortsFor(session.discipline)} labels={EFFORT_LABEL} onChange={(effort) => onChange({ effort })} />
+          <span className="text-xs text-muted">{EFFORTS[session.effort].hint}</span>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <NumberField field="durationMin" label="Duration" unit="min" {...field} />
           <NumberField field="tempC" label="Temperature" unit="°C" {...field} />

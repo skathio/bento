@@ -37,7 +37,7 @@ export const RANGES: Record<NumberKey, [number, number, number]> = {
 
 export const DEFAULT_SETTINGS: Settings = {
   session: {
-    discipline: "bike-road", effort: "bike-endurance", durationMin: 180, bodyKg: 70, tempC: 18,
+    discipline: "bike-road", effort: "bike-steady", durationMin: 180, bodyKg: 70, tempC: 18,
     humidityPct: 50, altitudeM: 0, sweatRateLh: 0, sweatSodiumMgL: 900, gut: "moderate", caffeineMgKg: 3, carbLoaded: false,
     airflow: "fan", paceSecKm: 0, powerW: 0, highCarb: false, practise: false, refillEveryMin: 0,
   },

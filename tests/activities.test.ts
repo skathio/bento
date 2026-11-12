@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import { test } from "node:test";
 
 import {
-  ACTIVITIES, DEFAULT_DISCIPLINE, DISCIPLINES, disciplinesOf, EFFORTS, effortsFor, keepEffort, modelOf,
+  ACTIVITIES, DEFAULT_DISCIPLINE, DISCIPLINE_IDS, DISCIPLINES, disciplinesOf, EFFORTS, effortsFor, keepEffort, modelOf,
 } from "../site/src/lib/activities.ts";
 import { parseSession, toPlanInput } from "../site/src/lib/storage.ts";
 
@@ -14,8 +14,8 @@ test("bike and run each branch into their own disciplines", () => {
 
 test("workouts offered follow the sport and discipline", () => {
   const labels = (d: Parameters<typeof effortsFor>[0]) => effortsFor(d).map((e) => EFFORTS[e].label);
-  assert.ok(labels("bike-road").includes("Gran fondo"));
-  assert.ok(!labels("run-road").includes("Gran fondo"));
+  assert.deepEqual(labels("bike-road"), ["Easy", "Steady", "Tempo / intervals", "Race"]);
+  assert.deepEqual(labels("run-road"), ["Easy", "Steady", "Tempo / intervals", "Race"]);
   assert.ok(labels("run-trail").includes("Ultra"));
   assert.ok(!labels("run-road").includes("Ultra"));
   assert.ok(!labels("bike-indoor").includes("Race"));
@@ -25,9 +25,9 @@ test("workouts offered follow the sport and discipline", () => {
 
 test("switching discipline keeps the workout, or one at the same intensity", () => {
   assert.equal(keepEffort("run-race", "run-trail"), "run-race");
-  assert.equal(keepEffort("run-ultra", "run-road"), "run-long");
+  assert.equal(keepEffort("run-ultra", "run-road"), "run-steady");
   assert.equal(keepEffort("bike-race", "bike-indoor"), "bike-intervals");
-  assert.equal(keepEffort("bike-endurance", "run-road"), "run-long");
+  assert.equal(keepEffort("bike-steady", "run-road"), "run-steady");
 });
 
 test("each pick maps onto the planner's sport, terrain and intensity", () => {
@@ -40,4 +40,13 @@ test("each pick maps onto the planner's sport, terrain and intensity", () => {
   assert.equal(input.terrain, "trail");
   assert.equal(input.workout, "z2");
   assert.ok(!("discipline" in input));
+});
+
+test("workouts describe effort, never session length, and each has a hint", () => {
+  for (const e of Object.values(EFFORTS)) {
+    assert.doesNotMatch(e.label, /long|fondo|endurance/i, e.label);
+    assert.ok(e.hint.length > 10, e.label);
+  }
+  const intensities = (d: Parameters<typeof effortsFor>[0]) => effortsFor(d).map((e) => EFFORTS[e].workout);
+  for (const d of DISCIPLINE_IDS) assert.equal(new Set(intensities(d)).size, intensities(d).length, `${d} offers two workouts at one intensity`);
 });
