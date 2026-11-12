@@ -3,11 +3,11 @@ import { test } from "node:test";
 
 import { buildPlan, packingList, SLOT_MIN } from "../site/src/lib/plan.ts";
 import { PRESETS } from "../site/src/lib/products.ts";
-import { DEFAULT_SETTINGS } from "../site/src/lib/storage.ts";
+import { DEFAULT_SETTINGS, toPlanInput } from "../site/src/lib/storage.ts";
 import type { PlanInput } from "../site/src/lib/types.ts";
 
 const packs = (...ids: string[]) => PRESETS.filter((p) => ids.includes(p.id));
-const input = (patch: Partial<PlanInput>): PlanInput => ({ ...DEFAULT_SETTINGS.session, packs: packs("gel-40", "bar", "drink-40"), ...patch });
+const input = (patch: Partial<PlanInput>): PlanInput => ({ ...toPlanInput(DEFAULT_SETTINGS.session, packs("gel-40", "bar", "drink-40")), ...patch });
 const owed = (i: PlanInput, carbsPerHour: number) => (carbsPerHour * i.durationMin) / 60;
 
 test("a long endurance ride meets its carb target within 15%", () => {

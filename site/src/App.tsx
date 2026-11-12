@@ -7,7 +7,7 @@ import Timeline from "./components/Timeline.tsx";
 import logo from "../favicon.svg";
 import { buildPlan } from "./lib/plan.ts";
 import { PRESETS } from "./lib/products.ts";
-import { CUSTOM_MAX, loadSettings, saveSettings, type Session, type Settings } from "./lib/storage.ts";
+import { CUSTOM_MAX, loadSettings, saveSettings, toPlanInput, type Session, type Settings } from "./lib/storage.ts";
 import type { FuelPack } from "./lib/types.ts";
 
 export default function App() {
@@ -17,7 +17,7 @@ export default function App() {
   const allPacks = useMemo(() => [...PRESETS, ...settings.custom], [settings.custom]);
   const plan = useMemo(() => {
     const packs = allPacks.filter((p) => settings.selected.includes(p.id));
-    return buildPlan({ ...settings.session, packs });
+    return buildPlan(toPlanInput(settings.session, packs));
   }, [allPacks, settings.selected, settings.session]);
 
   const setSession = (patch: Partial<Session>) => setSettings((s) => ({ ...s, session: { ...s.session, ...patch } }));

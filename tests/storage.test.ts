@@ -10,9 +10,9 @@ test("missing or corrupt storage gives the defaults", () => {
 });
 
 test("sessions are clamped and enums checked", () => {
-  const s = parseSession({ sport: "trail-run", workout: "swim", durationMin: 99999, bodyKg: "heavy", carbLoaded: "yes" });
-  assert.equal(s.sport, "trail-run");
-  assert.equal(s.workout, DEFAULT_SETTINGS.session.workout);
+  const s = parseSession({ discipline: "run-trail", effort: "swim", durationMin: 99999, bodyKg: "heavy", carbLoaded: "yes" });
+  assert.equal(s.discipline, "run-trail");
+  assert.equal(s.effort, "run-long");
   assert.equal(s.durationMin, 1440);
   assert.equal(s.bodyKg, DEFAULT_SETTINGS.session.bodyKg);
   assert.equal(s.carbLoaded, false);

@@ -1,8 +1,4 @@
 // Display formatting for the planner. Pure, so it is unit-tested.
-import type { Sport, Workout } from "./types.ts";
-
-export const SPORT_LABEL: Record<Sport, string> = { ride: "Bike", run: "Run", "trail-run": "Trail run" };
-export const WORKOUT_LABEL: Record<Workout, string> = { z2: "Zone 2", endurance: "Endurance", race: "Race" };
 
 /** Minutes as an elapsed clock: 5 → "0:05", 135 → "2:15". */
 export function fmtClock(minutes: number): string {

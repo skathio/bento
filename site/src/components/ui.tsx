@@ -25,7 +25,7 @@ export function Segmented<T extends string>({ label, value, options, labels, onC
   return (
     <div role="radiogroup" aria-label={label} className="flex flex-col gap-1">
       <span className="text-xs font-medium text-muted">{label}</span>
-      <div className="flex rounded-xl bg-surface-2 p-1">
+      <div className="flex flex-wrap rounded-xl bg-surface-2 p-1">
         {options.map((o) => (
           <button
             key={o}
@@ -33,7 +33,7 @@ export function Segmented<T extends string>({ label, value, options, labels, onC
             role="radio"
             aria-checked={o === value}
             onClick={() => onChange(o)}
-            className={`flex-1 rounded-lg px-2 py-1.5 text-sm transition-colors ${o === value ? "bg-lacquer font-semibold text-on-accent shadow-sm" : "text-ink hover:bg-surface"}`}
+            className={`flex-auto rounded-lg px-2 py-1.5 text-sm whitespace-nowrap transition-colors ${o === value ? "bg-lacquer font-semibold text-on-accent shadow-sm" : "text-ink hover:bg-surface"}`}
           >
             {labels[o]}
           </button>

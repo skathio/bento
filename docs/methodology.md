@@ -8,6 +8,30 @@ asks for the evidence that should confirm or replace each one.
 
 Bento gives general guidance. It is not medical advice.
 
+## What the athlete picks
+
+The form branches Bike or Run, then a type, then a workout offered for that type
+([`site/src/lib/activities.ts`](../site/src/lib/activities.ts)). Each pick maps onto the three
+inputs the rules below use: sport, terrain and intensity (z2, endurance or race).
+
+| Pick | Sport | Terrain | Basis |
+| --- | --- | --- | --- |
+| Bike: road, indoor | cycling | road | Indoor riding fuels like road riding; heat and airflow come in through temperature and sweat rate |
+| Bike: gravel, MTB | cycling | trail | Rougher ground: more effort for the speed, and gels and solids are easier to take than a bottle |
+| Run: road, treadmill | running | road | |
+| Run: trail | trail running | trail | |
+
+| Workout | Intensity | Offered for | Basis |
+| --- | --- | --- | --- |
+| Zone 2 (bike), Easy (run) | z2 | all types | Low intensity, mostly fat oxidation |
+| Endurance (bike), Long run | endurance | all types | Moderate, long |
+| Tempo / intervals | endurance | all types | Hard efforts with recoveries; over a whole session carb use sits in the endurance band. An MVP simplification |
+| Gran fondo | endurance | road, gravel | Long mass-start ride at endurance pace for most riders |
+| Ultra | endurance | trail run | Ultras are run well below shorter-race intensity; planned at endurance until the research prompt's evidence sets its own band |
+| Race | race | outdoor types | Racing is not offered indoors or on a treadmill |
+
+Switching type keeps the workout if it is offered, else picks the nearest intensity offered.
+
 ## Carbohydrate
 
 | Rule | Value in Bento | Basis |
