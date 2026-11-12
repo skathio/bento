@@ -245,7 +245,8 @@ export function targets(input: PlanInput): Targets {
     fluidMlPerHour: fluid,
     sweatRateLh: sweat,
     sodiumMgPerHour: sodium,
-    caffeineCapMg: caffeineCap(input.bodyKg, input.caffeineMgKg),
+    // The cap only means something with a caffeinated pack to schedule.
+    caffeineCapMg: input.packs.some((p) => p.caffeineMg > 0) ? caffeineCap(input.bodyKg, input.caffeineMgKg) : 0,
     ratio: carbRatio(carbs.target),
     fluidPlanned: fluidPlanned(input),
     sodiumNeeded: sodium > 0,
@@ -284,7 +285,7 @@ const RULES: Rule[] = [
     note: () => "No fuel needed for an easy session this short. Tick \"Practise fueling\" under More options to train your gut, or after a fasted start or a second session that day.",
   },
   {
-    when: (i) => i.workout === "race" && i.durationMin >= 90 && !i.carbLoaded,
+    when: (i) => i.workout === "race" && i.durationMin >= 90,
     note: (i) => `Carb-load before a race this long: ${Math.round(i.bodyKg * 10)}-${Math.round(i.bodyKg * 12)} g of carbs a day for the 36-48 h before.`,
   },
   {
@@ -344,11 +345,11 @@ const RULES: Rule[] = [
     note: () => "Running tolerates less than riding. Take each gel with 150-250 ml of water, and test every product in training first.",
   },
   {
-    when: (i) => i.caffeineMgKg > 3,
+    when: (_i, t) => t.caffeineCapMg > 0 && _i.caffeineMgKg > 3,
     note: () => "Above 3 mg/kg, caffeine adds little and raises the risk of gut upset, jitters and poor sleep.",
   },
   {
-    when: (i) => i.caffeineMgKg > 0 && i.durationMin <= 90,
+    when: (i, t) => t.caffeineCapMg > 0 && i.durationMin <= 90,
     note: () => "For a session this short, take caffeine 45-60 min before the start rather than during it.",
   },
   {

@@ -65,8 +65,6 @@ export interface PlanInput {
   refillEveryMin: number;
   /** Caffeine allowed during the session, as a total cap in mg per kg (0 = none). */
   caffeineMgKg: number;
-  /** Whether the athlete carb-loaded in the 36-48 h before. */
-  carbLoaded: boolean;
   packs: FuelPack[];
 }
 

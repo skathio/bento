@@ -177,13 +177,15 @@ test("solids suit trail and easy efforts, not road runs or race finishes", () =>
 test("notes cover the extra factors when they apply", () => {
   const notes = (p: Partial<PlanInput>) => notesFor(at(p), targets(at(p))).join(" ");
   assert.match(notes({ workout: "race", durationMin: 240 }), /Carb-load/);
-  assert.doesNotMatch(notes({ workout: "race", durationMin: 240, carbLoaded: true }), /Carb-load/);
+  assert.doesNotMatch(notes({ workout: "endurance", durationMin: 240 }), /Carb-load/);
   assert.match(notes({ tempC: 32 }), /Heat/);
   assert.match(notes({ tempC: -2 }), /cold/);
   assert.match(notes({ altitudeM: 2000 }), /altitude/);
   assert.match(notes({ terrain: "trail" }), /climbs/);
   assert.match(notes({ sport: "run", durationMin: 120 }), /150-250 ml of water/);
-  assert.match(notes({ caffeineMgKg: 5 }), /3 mg\/kg/);
+  const cafGel = { id: "custom-caf", name: "Caf gel", kind: "gel", carbsG: 25, sodiumMg: 50, caffeineMg: 75, fluidMl: 0, volumeMl: 40 } as const;
+  assert.match(notes({ caffeineMgKg: 5, packs: [cafGel] }), /3 mg\/kg/);
+  assert.doesNotMatch(notes({ caffeineMgKg: 5 }), /mg\/kg/, "no caffeine notes without a caffeinated pack");
   assert.match(notes({ durationMin: 30 }), /45 minutes/);
   assert.match(notes({ gut: "low", workout: "race" }), /gut training is limiting/);
   assert.doesNotMatch(notes({ gut: "high", workout: "endurance" }), /gut training is limiting/);

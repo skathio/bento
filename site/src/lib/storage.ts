@@ -38,7 +38,7 @@ export const RANGES: Record<NumberKey, [number, number, number]> = {
 export const DEFAULT_SETTINGS: Settings = {
   session: {
     discipline: "bike-road", effort: "bike-steady", durationMin: 180, bodyKg: 70, tempC: 18,
-    humidityPct: 50, altitudeM: 0, sweatRateLh: 0, sweatSodiumMgL: 900, gut: "moderate", caffeineMgKg: 3, carbLoaded: false,
+    humidityPct: 50, altitudeM: 0, sweatRateLh: 0, sweatSodiumMgL: 900, gut: "moderate", caffeineMgKg: 3,
     airflow: "fan", paceSecKm: 0, powerW: 0, highCarb: false, practise: false, refillEveryMin: 0,
   },
   selected: ["gel-40", "bar", "drink-40"],
@@ -92,7 +92,6 @@ export function parseSession(raw: unknown): Session {
     ...activity(r),
     gut: pick(GUT_LEVELS, r.gut, d.gut),
     airflow: pick(AIRFLOWS, r.airflow, d.airflow),
-    carbLoaded: r.carbLoaded === true,
     highCarb: r.highCarb === true,
     practise: r.practise === true,
   };
