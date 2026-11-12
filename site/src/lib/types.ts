@@ -48,6 +48,10 @@ export interface PlanInput {
   paceSecKm: number;
   /** Average riding power in W; 0 means unknown, so the workout's typical power is used. */
   powerW: number;
+  /** Functional threshold power in W; with power it sets the carb intensity. 0 means unknown. */
+  ftpW: number;
+  /** Threshold (about 1-hour race) pace in seconds per km; with pace it sets the carb intensity. 0 means unknown. */
+  thresholdPaceSecKm: number;
   bodyKg: number;
   tempC: number;
   humidityPct: number;

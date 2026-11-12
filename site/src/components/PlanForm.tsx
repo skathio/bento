@@ -60,8 +60,16 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
   );
 }
 
-/** Running pace as min:sec per km; blank means use the workout's typical pace. */
-function PaceField({ session, onChange }: { session: Session; onChange: (patch: Partial<Session>) => void }) {
+interface PaceProps {
+  field: "paceSecKm" | "thresholdPaceSecKm";
+  label: string;
+  hint: string;
+  session: Session;
+  onChange: (patch: Partial<Session>) => void;
+}
+
+/** A pace as min:sec per km; blank means unknown. */
+function PaceField({ field, label, hint, session, onChange }: PaceProps) {
   const [draft, setDraft] = useState<string | null>(null);
   const [bad, setBad] = useState(false);
   const hintId = useId();
@@ -70,19 +78,19 @@ function PaceField({ session, onChange }: { session: Session; onChange: (patch: 
     const v = parsePace(draft);
     setBad(v === null);
     if (v !== null) {
-      onChange({ paceSecKm: v });
+      onChange({ [field]: v });
       setDraft(null);
     }
   };
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted">Pace</span>
+        <span className="text-xs font-medium text-muted">{label}</span>
         <span className={`flex items-center gap-2 rounded-xl border bg-surface px-3 py-1.5 focus-within:border-accent ${bad ? "border-bad" : "border-line"}`}>
           <input
             inputMode="decimal"
-            placeholder="typical"
-            value={draft ?? fmtPace(session.paceSecKm)}
+            placeholder="m:ss"
+            value={draft ?? fmtPace(session[field])}
             onChange={(e) => { setDraft(e.target.value); setBad(false); }}
             onBlur={commit}
             onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
@@ -93,7 +101,7 @@ function PaceField({ session, onChange }: { session: Session; onChange: (patch: 
           <span className="text-xs text-muted">/km</span>
         </span>
       </label>
-      <span id={hintId} className={`text-xs ${bad ? "text-bad" : "text-muted"}`}>{bad ? "Type a pace like 5:30" : "Blank = typical for the workout"}</span>
+      <span id={hintId} className={`text-xs ${bad ? "text-bad" : "text-muted"}`}>{bad ? "Type a pace like 5:30" : hint}</span>
     </div>
   );
 }
@@ -189,11 +197,28 @@ export default function PlanForm({ session, relevant, onChange }: FormProps) {
         <details className="rounded-xl border border-line px-3">
           <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">More options</summary>
           <div className="flex flex-col gap-4 pb-3">
-            <Group title="Carbs" note="Carbs follow the workout, the duration and your gut training.">
+            {relevant.paceOrPower && (
+              <Group
+                title="Effort"
+                note={activity === "run"
+                  ? "Pace sets your sweat rate. Add your threshold pace and it sets the carb intensity too."
+                  : "Power sets your sweat rate. Add your FTP and it sets the carb intensity too."}
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  {activity === "run"
+                    ? <PaceField field="paceSecKm" label="Pace" hint="Blank = typical for the workout" {...field} />
+                    : <NumberField field="powerW" label="Average power" unit="W" hint="0 = typical for the workout" {...field} />}
+                  {relevant.threshold && (activity === "run"
+                    ? <PaceField field="thresholdPaceSecKm" label="Threshold pace" hint="About your 1-hour race pace" {...field} />
+                    : <NumberField field="ftpW" label="FTP" unit="W" hint="0 = unknown" {...field} />)}
+                </div>
+              </Group>
+            )}
+            <Group title="Carbs" note="Carbs follow the effort, the duration and your gut training.">
               {relevant.gut ? (
                 <Segmented label="Gut training" value={session.gut} options={GUT_LEVELS} labels={GUT_LABEL} onChange={(gut) => onChange({ gut })} />
               ) : (
-                <p className="text-xs text-muted">This session needs little or no fuel, so gut training does not change it.</p>
+                <p className="text-xs text-muted">Gut training does not limit the carbs for this session.</p>
               )}
               {relevant.highCarb && (
                 <Check checked={session.highCarb} onChange={(highCarb) => onChange({ highCarb })}>Allow 90-120 g/h (trained gut, race over 2.5 h)</Check>
@@ -205,7 +230,6 @@ export default function PlanForm({ session, relevant, onChange }: FormProps) {
             <Group title="Fluid and sodium" note="These set your sweat rate, so they change fluid and sodium, not carbs.">
               {relevant.airflow && <Segmented label="Airflow" value={session.airflow} options={AIRFLOWS} labels={AIRFLOW_LABEL} onChange={(airflow) => onChange({ airflow })} />}
               <div className="grid grid-cols-2 gap-3">
-                {relevant.paceOrPower && (activity === "run" ? <PaceField {...field} /> : <NumberField field="powerW" label="Average power" unit="W" hint="0 = typical for the workout" {...field} />)}
                 <NumberField field="bodyKg" label="Body weight" unit="kg" {...field} />
                 <NumberField field="humidityPct" label="Humidity" unit="%" {...field} />
                 <NumberField field="sweatRateLh" label="Sweat rate" unit="L/h" hint="0 = estimate it" {...field} />

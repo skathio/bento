@@ -2,6 +2,7 @@
 // does, so every visible field matters; tests/options.test.ts checks that each option shown
 // changes the plan and each option hidden does not.
 import { carbPlan, targets } from "./factors.ts";
+import { WORKOUTS } from "./types.ts";
 import { buildPlan } from "./plan.ts";
 import type { FuelPack, PlanInput } from "./types.ts";
 
@@ -11,8 +12,10 @@ export const ALTITUDE_FROM_M = 2000;
 export interface Relevant {
   /** Gut training: only where the gut ceiling can bind, so not on sessions that need no carbs. */
   gut: boolean;
-  /** Pace or power: they feed the sweat estimate, so not once a measured sweat rate replaces it. */
+  /** Pace or power: they feed the sweat estimate and, with a threshold, the carb intensity. */
   paceOrPower: boolean;
+  /** FTP or threshold pace: only with power or pace entered, and where intensity changes the carbs. */
+  threshold: boolean;
   /** The 90-120 g/h opt-in: a trained gut in a race over 2.5 h. */
   highCarb: boolean;
   /** Practise fueling: only where the plan would otherwise give less than the practice dose. */
@@ -36,9 +39,14 @@ export function relevantOptions(input: PlanInput, packs: FuelPack[]): Relevant {
   const withoutPractice = carbPlan({ ...input, practise: false }).target;
   const withPractice = carbPlan({ ...input, practise: true }).target;
   const gutTargets = new Set((["low", "moderate", "high"] as const).map((gut) => JSON.stringify(carbPlan({ ...input, gut }))));
+  const bare = { ...input, powerW: 0, ftpW: 0, paceSecKm: 0, thresholdPaceSecKm: 0 };
+  const intensityMatters =
+    input.workout !== "ultra" && new Set(WORKOUTS.filter((w) => w !== "ultra").map((workout) => carbPlan({ ...bare, workout }).target)).size > 1;
+  const effortGiven = input.sport === "ride" ? input.powerW > 0 : input.paceSecKm > 0;
   return {
     gut: gutTargets.size > 1,
-    paceOrPower: input.sweatRateLh <= 0,
+    paceOrPower: input.sweatRateLh <= 0 || intensityMatters,
+    threshold: effortGiven && intensityMatters,
     highCarb: input.gut === "high" && input.workout === "race" && input.durationMin > 150,
     practise: withPractice !== withoutPractice,
     sweatSodium: targets({ ...input, sweatSodiumMgL: 900 }).sodiumNeeded,

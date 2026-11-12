@@ -59,12 +59,39 @@ export const HIGH_ALTITUDE_M = 1500;
 const round = (v: number, step: number) => Number((Math.round(v / step) * step).toFixed(2));
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-type CarbInput = Pick<PlanInput, "sport" | "workout" | "durationMin" | "gut" | "highCarb" | "practise">;
+type CarbInput = Pick<PlanInput, "sport" | "workout" | "durationMin" | "gut" | "highCarb" | "practise"> &
+  Partial<Pick<PlanInput, "powerW" | "ftpW" | "paceSecKm" | "thresholdPaceSecKm">>;
+
+/**
+ * Intensity from effort relative to threshold, upper bounds of each band. Bike: power ÷ FTP, after
+ * Coggan's training zones (endurance up to 75%, tempo and sweet spot to 95%). Run: speed ÷
+ * threshold speed, after Daniels' paces (easy below ~85%, marathon to ~94%, threshold to 100%).
+ * Training-zone conventions, not from the evidence review.
+ */
+export const THRESHOLD_BANDS: Record<"ride" | "run", readonly [number, Workout][]> = {
+  ride: [[0.76, "z2"], [0.86, "endurance"], [0.96, "tempo"], [Infinity, "race"]],
+  run: [[0.85, "z2"], [0.94, "endurance"], [1.0, "tempo"], [Infinity, "race"]],
+};
+
+/** Effort as a fraction of threshold, or null when power and FTP (or pace and threshold pace) are not both known. */
+export function thresholdRatio(i: CarbInput): number | null {
+  if (i.sport === "ride") return i.powerW && i.ftpW ? i.powerW / i.ftpW : null;
+  return i.paceSecKm && i.thresholdPaceSecKm ? i.thresholdPaceSecKm / i.paceSecKm : null;
+}
+
+/** The intensity carbs are planned at: from threshold when known, else the workout picked. Ultras keep their own band. */
+export function carbIntensity(i: CarbInput): Workout {
+  const ratio = thresholdRatio(i);
+  if (ratio === null || i.workout === "ultra") return i.workout;
+  const bands = THRESHOLD_BANDS[i.sport === "ride" ? "ride" : "run"];
+  return bands.find(([upTo]) => ratio < upTo)![1];
+}
 
 /** Whether this session may use the 90-120 g/h band: trained gut, opted in, a race over 2.5 h. */
 const highCarbAllowed = (i: CarbInput) => i.highCarb && i.gut === "high" && i.workout === "race" && i.durationMin > 150;
 
-function curveFor(i: CarbInput): readonly Anchor[] {
+function curveFor(input: CarbInput): readonly Anchor[] {
+  const i = { ...input, workout: carbIntensity(input) };
   const base = CARB_CURVES[i.workout];
   if (highCarbAllowed(i)) return [...base.filter((a) => a[0] < 150), ...HIGH_CARB_TAIL];
   const tail = i.gut === "high" ? TRAINED_TAIL[i.workout] : undefined;
@@ -86,7 +113,8 @@ function ceilingFor(i: CarbInput): number {
 const MIN_TARGET_G_H = 10;
 
 /** Band and target in g/h after the sport factor and the gut ceiling, rounded to 5 g. */
-export function carbPlan(i: CarbInput): { band: [number, number]; target: number; limitedByGut: boolean } {
+export function carbPlan(input: CarbInput): { band: [number, number]; target: number; limitedByGut: boolean } {
+  const i = { ...input, workout: carbIntensity(input) };
   const [lo, hi, raw] = rawCell(i);
   const factor = i.workout === "ultra" ? 1 : SPORT_GUT_FACTOR[i.sport];
   const ceiling = ceilingFor(i);
@@ -275,7 +303,18 @@ interface Rule {
   note: (input: PlanInput, t: Targets) => string;
 }
 
+const INTENSITY_WORDS: Record<Workout, string> = { z2: "an easy", endurance: "a steady", tempo: "a tempo", race: "a race-level", ultra: "an ultra" };
+
 const RULES: Rule[] = [
+  {
+    // Only when the threshold actually moves the carbs, not just the label.
+    when: (i) => carbPlan(i).target !== carbPlan({ ...i, ftpW: 0, thresholdPaceSecKm: 0 }).target,
+    note: (i) => {
+      const pct = Math.round((thresholdRatio(i) ?? 0) * 100);
+      const of = i.sport === "ride" ? "your FTP" : "your threshold pace";
+      return `At ${pct}% of ${of}, carbs are planned for ${INTENSITY_WORDS[carbIntensity(i)]} effort, not the workout you picked.`;
+    },
+  },
   {
     when: (i) => i.durationMin < 45,
     note: () => "Under 45 minutes, stored glycogen covers the work. Rinse your mouth with a sports drink if you want a lift.",
