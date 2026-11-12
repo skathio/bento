@@ -5,6 +5,7 @@ import {
 import { useId, useState, type ReactNode } from "react";
 import { commitNumber, inRange, RANGES, type Session } from "../lib/storage.ts";
 import { fmtPace, parsePace } from "../lib/format.ts";
+import { ftpWatts } from "../lib/factors.ts";
 import { ALTITUDE_FROM_M, type Relevant } from "../lib/options.ts";
 import { AIRFLOWS, GUT_LEVELS } from "../lib/types.ts";
 import { Card, Segmented } from "./ui.tsx";
@@ -161,6 +162,11 @@ function ActivityPicker({ value, onChange }: { value: Activity; onChange: (a: Ac
 }
 const GUT_LABEL = { low: "New", moderate: "Some", high: "Trained" } as const;
 
+/** The FTP in watts the W/kg entry works out to, so the athlete can check it. */
+function ftpHint(s: Session): string {
+  return s.ftpWkg > 0 ? `= ${ftpWatts(s)} W at ${s.bodyKg} kg` : "e.g. 3.5; 0 = unknown";
+}
+
 function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <fieldset className="flex flex-col gap-3">
@@ -210,7 +216,7 @@ export default function PlanForm({ session, relevant, onChange }: FormProps) {
                     : <NumberField field="powerW" label="Average power" unit="W" hint="0 = typical for the workout" {...field} />}
                   {relevant.threshold && (activity === "run"
                     ? <PaceField field="thresholdPaceSecKm" label="Threshold pace" hint="About your 1-hour race pace" {...field} />
-                    : <NumberField field="ftpW" label="FTP" unit="W" hint="0 = unknown" {...field} />)}
+                    : <NumberField field="ftpWkg" label="FTP" unit="W/kg" hint={ftpHint(session)} {...field} />)}
                 </div>
               </Group>
             )}

@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import {
   blockedReason, CARB_CURVES, caffeineCap, carbPlan, carbRatio, dryHeatLossW, estimateSweatRate, fluidCeiling, fluidPlanned, fluidTarget,
-  carbIntensity, kindPreference, notesFor, onCurve, sodiumShare, sodiumTarget, targets, typicalRunSpeed,
+  carbIntensity, ftpWatts, kindPreference, notesFor, onCurve, sodiumShare, sodiumTarget, targets, typicalRunSpeed,
 } from "../site/src/lib/factors.ts";
 import { DEFAULT_SETTINGS, toPlanInput } from "../site/src/lib/storage.ts";
 import { WORKOUTS, type PlanInput } from "../site/src/lib/types.ts";
@@ -215,7 +215,7 @@ test("targets too small for any pack become none", () => {
 });
 
 test("power ÷ FTP and pace ÷ threshold pace set the carb intensity (training-zone bands)", () => {
-  const bike = (powerW: number) => carbIntensity({ sport: "ride", workout: "z2", durationMin: 180, gut: "moderate", highCarb: false, practise: false, powerW, ftpW: 250 });
+  const bike = (powerW: number) => carbIntensity({ sport: "ride", workout: "z2", durationMin: 180, gut: "moderate", highCarb: false, practise: false, powerW, ftpWkg: 3.5, bodyKg: 70 });
   assert.deepEqual([150, 185, 200, 230, 260].map(bike), ["z2", "z2", "endurance", "tempo", "race"]);
   const run = (paceSecKm: number) => carbIntensity({ sport: "run", workout: "z2", durationMin: 180, gut: "moderate", highCarb: false, practise: false, paceSecKm, thresholdPaceSecKm: 270 });
   assert.deepEqual([360, 300, 280, 260].map(run), ["z2", "endurance", "tempo", "race"]);
@@ -226,8 +226,30 @@ test("power ÷ FTP and pace ÷ threshold pace set the carb intensity (training-z
 test("an 'easy' ride at 300 W with a 250 W FTP is fueled like a race and says why", () => {
   const easy = at({ workout: "z2", durationMin: 90 });
   assert.equal(carbPlan(easy).target, 0);
-  const hard = at({ workout: "z2", durationMin: 90, powerW: 300, ftpW: 250 });
+  const hard = at({ workout: "z2", durationMin: 90, powerW: 300, ftpWkg: 3.5 });
   assert.ok(carbPlan(hard).target >= 45, `${carbPlan(hard).target} g/h`);
-  assert.match(notesFor(hard, targets(hard)).join(" "), /At 120% of your FTP, carbs are planned for a race-level effort/);
-  assert.doesNotMatch(notesFor(at({ workout: "z2", durationMin: 90, powerW: 150, ftpW: 250 }), targets(at({ workout: "z2", durationMin: 90, powerW: 150, ftpW: 250 }))).join(" "), /of your FTP/);
+  assert.match(notesFor(hard, targets(hard)).join(" "), /At 122% of your FTP \(245 W\), carbs are planned for a race-level effort/);
+  assert.doesNotMatch(notesFor(at({ workout: "z2", durationMin: 90, powerW: 150, ftpWkg: 3.5 }), targets(at({ workout: "z2", durationMin: 90, powerW: 150, ftpWkg: 3.5 }))).join(" "), /of your FTP/);
+});
+
+test("FTP is entered in W/kg and converted with body weight", () => {
+  assert.equal(ftpWatts({ ftpWkg: 3.3, bodyKg: 70 }), 231);
+  assert.equal(ftpWatts({ ftpWkg: 3.3, bodyKg: 90 }), 297);
+  assert.equal(ftpWatts({ ftpWkg: 0, bodyKg: 70 }), 0);
+  const ride = at({ workout: "z2", durationMin: 120, powerW: 200, ftpWkg: 3.3, bodyKg: 70 });
+  assert.equal(carbIntensity(ride), "tempo", "200 W of 231 W is 87%");
+  assert.match(notesFor(ride, targets(ride)).join(" "), /At 87% of your FTP \(231 W\)/);
+});
+
+test("an impossible effort ÷ threshold is ignored, with a note to check it", () => {
+  const wrong = at({ workout: "z2", durationMin: 120, powerW: 200, ftpWkg: 0.3 });
+  assert.equal(carbIntensity(wrong), "z2");
+  assert.equal(carbPlan(wrong).target, carbPlan(at({ workout: "z2", durationMin: 120 })).target);
+  assert.match(notesFor(wrong, targets(wrong)).join(" "), /952% of the FTP you entered.*ignored.*W\/kg/);
+  assert.doesNotMatch(notesFor(wrong, targets(wrong)).join(" "), /carbs are planned for/);
+  const run = at({ sport: "run", workout: "z2", durationMin: 120, paceSecKm: 360, thresholdPaceSecKm: 150 });
+  assert.equal(carbIntensity(run), "z2");
+  assert.match(notesFor(run, targets(run)).join(" "), /threshold pace is ignored/);
+  const ok = at({ workout: "z2", durationMin: 120, powerW: 300, ftpWkg: 3.5 });
+  assert.equal(carbIntensity(ok), "race", "120% is hard but possible");
 });
