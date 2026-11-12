@@ -163,7 +163,7 @@ export function packingList(events: IntakeEvent[], packs: FuelPack[] = []): Pack
  */
 export function stretches(input: PlanInput, t: Targets, events: IntakeEvent[]): Stretches | null {
   const every = input.refillEveryMin;
-  if (every <= 0 || every >= input.durationMin) return null;
+  if (input.indoor || every <= 0 || every >= input.durationMin) return null; // indoors everything is at hand
   const count = Math.ceil(input.durationMin / every);
   const carry = new Map<string, PackLine>();
   let waterMl = 0;
@@ -179,7 +179,9 @@ export function stretches(input: PlanInput, t: Targets, events: IntakeEvent[]): 
     waterMl = Math.max(waterMl, (t.fluidMlPerHour * (to - from)) / 60 - drinks);
   }
   const lines = [...carry.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-  return { everyMin: every, count, carry: lines, waterMl: Math.max(0, Math.round(waterMl / 50) * 50) };
+  const water = Math.max(0, Math.round(waterMl / 50) * 50);
+  if (lines.length === 0 && water === 0) return null; // nothing to carry, so nothing to restock
+  return { everyMin: every, count, carry: lines, waterMl: water };
 }
 
 const sum = (events: IntakeEvent[], key: "carbsG" | "sodiumMg" | "caffeineMg" | "fluidMl") =>

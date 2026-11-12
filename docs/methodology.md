@@ -16,7 +16,26 @@ Bento gives general guidance. It is not medical advice.
 The form branches Bike or Run, then a type, then a workout offered for that type
 ([`site/src/lib/activities.ts`](../site/src/lib/activities.ts)). Each pick maps onto the inputs the
 rules use: sport, terrain, indoor or outdoor, and intensity (z2, endurance, tempo, race, ultra).
-Everything beyond duration and temperature is optional and sits under "More options".
+Everything beyond duration and temperature is optional and sits under "More options", grouped by
+what it changes:
+
+| Group | Options | Shown when |
+| --- | --- | --- |
+| Carbs | gut training | the gut ceiling can change the target (not on sessions that need no fuel) |
+| | 90-120 g/h opt-in | trained gut, race, over 2.5 h |
+| | practise fueling | it would raise the target (easy or short sessions) |
+| Fluid and sodium | power (bike) or pace (run) | no measured sweat rate replaces the estimate |
+| | body weight, humidity, sweat rate, "above 2000 m" | always |
+| | sweat sodium | the session needs sodium |
+| | airflow | indoor and treadmill |
+| Caffeine and refills | caffeine cap | a caffeinated pack is carried |
+| | refill every | outdoors, with something to carry |
+
+An option is shown only when changing it can change the plan; [`tests/options.test.ts`](../tests/options.test.ts)
+checks that across every type, workout and a range of durations. Carbs follow the workout,
+duration and gut training only: the review keeps them in absolute g/h (A5), so body weight, power,
+pace and weather change fluid and sodium, not carbs. Altitude is a yes/no question because the rules
+only use it from 2000 m.
 
 | Pick | Sport | Terrain | Indoor | Basis |
 | --- | --- | --- | --- | --- |

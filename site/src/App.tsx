@@ -5,6 +5,7 @@ import Summary from "./components/Summary.tsx";
 import ThemeToggle from "./components/ThemeToggle.tsx";
 import Timeline from "./components/Timeline.tsx";
 import logo from "../favicon.svg";
+import { relevantOptions } from "./lib/options.ts";
 import { buildPlan } from "./lib/plan.ts";
 import { PRESETS } from "./lib/products.ts";
 import { CUSTOM_MAX, loadSettings, saveSettings, toPlanInput, type Session, type Settings } from "./lib/storage.ts";
@@ -15,9 +16,10 @@ export default function App() {
   useEffect(() => saveSettings(settings), [settings]);
 
   const allPacks = useMemo(() => [...PRESETS, ...settings.custom], [settings.custom]);
-  const plan = useMemo(() => {
+  const { plan, relevant } = useMemo(() => {
     const packs = allPacks.filter((p) => settings.selected.includes(p.id));
-    return buildPlan(toPlanInput(settings.session, packs));
+    const input = toPlanInput(settings.session, packs);
+    return { plan: buildPlan(input), relevant: relevantOptions(input, packs) };
   }, [allPacks, settings.selected, settings.session]);
 
   const setSession = (patch: Partial<Session>) => setSettings((s) => ({ ...s, session: { ...s.session, ...patch } }));
@@ -40,7 +42,7 @@ export default function App() {
       </header>
       <main className="grid gap-5 pb-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="flex flex-col gap-5">
-          <PlanForm session={settings.session} onChange={setSession} />
+          <PlanForm session={settings.session} relevant={relevant} onChange={setSession} />
           <FuelPackEditor packs={allPacks} selected={settings.selected} onToggle={toggle} onAdd={addPack} onRemove={removePack} />
         </div>
         <div className="flex flex-col gap-5">

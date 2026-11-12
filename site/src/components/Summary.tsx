@@ -32,9 +32,8 @@ function PackList({ lines, waterMl, waterLabel }: { lines: PackLine[]; waterMl: 
   );
 }
 
-function caffeineSub(capMg: number, carried: number, durationMin: number): string {
-  if (capMg <= 0) return "set a cap under More options";
-  if (carried <= 0) return "no caffeinated pack carried";
+function caffeineSub(capMg: number, durationMin: number): string {
+  if (capMg <= 0) return "no caffeinated pack, or cap 0";
   return durationMin <= 90 ? "at the start" : "half early, rest from 30%";
 }
 
@@ -56,7 +55,7 @@ export default function Summary({ plan, durationMin }: { plan: Plan; durationMin
         <Tile label="Carbs" value={t.carbsPerHour > 0 ? `${t.carbsPerHour} g/h` : "None"} sub={t.carbsPerHour === 0 ? "not needed" : t.ratio ? `${fmtBand(t.carbBand, "g/h")}, glucose:fructose ${t.ratio}` : fmtBand(t.carbBand, "g/h")} />
         <Tile label="Fluid" value={t.fluidMlPerHour > 0 ? `${fmtFluid(t.fluidMlPerHour)}/h` : "To thirst"} sub={t.fluidPlanned ? `planned · sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h` : `a guide · sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h`} />
         <Tile label="Sodium" value={t.sodiumNeeded ? `${t.sodiumMgPerHour} mg/h` : "Optional"} sub={t.sodiumNeeded ? "half of sweat losses" : "to taste, up to 500 mg/h"} />
-        <Tile label="Caffeine" value={t.caffeineCapMg > 0 ? `≤ ${t.caffeineCapMg} mg` : "None"} sub={caffeineSub(t.caffeineCapMg, totals.caffeineMg, durationMin)} />
+        <Tile label="Caffeine" value={t.caffeineCapMg > 0 ? `≤ ${t.caffeineCapMg} mg` : "None"} sub={caffeineSub(t.caffeineCapMg, durationMin)} />
       </div>
 
       {stretches ? (

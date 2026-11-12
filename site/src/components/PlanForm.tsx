@@ -2,9 +2,10 @@ import {
   ACTIVITIES, DEFAULT_DISCIPLINE, DISCIPLINES, disciplinesOf, EFFORTS, effortsFor, keepEffort,
   type Activity, type DisciplineId, type EffortId,
 } from "../lib/activities.ts";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { commitNumber, inRange, RANGES, type Session } from "../lib/storage.ts";
 import { fmtPace, parsePace } from "../lib/format.ts";
+import { ALTITUDE_FROM_M, type Relevant } from "../lib/options.ts";
 import { AIRFLOWS, GUT_LEVELS } from "../lib/types.ts";
 import { Card, Segmented } from "./ui.tsx";
 
@@ -23,6 +24,7 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
   const [min, max, step] = RANGES[field];
   // The text being typed; null while the field shows the committed value.
   const [draft, setDraft] = useState<string | null>(null);
+  const hintId = useId();
   const type = (raw: string) => {
     setDraft(raw);
     if (inRange(field, raw)) onChange({ [field]: Number(raw) });
@@ -33,25 +35,28 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
     setDraft(null);
   };
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-muted">{label}</span>
-      <span className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 focus-within:border-accent">
-        <input
-          type="number"
-          inputMode="decimal"
-          min={min}
-          max={max}
-          step={step}
-          value={draft ?? session[field]}
-          onChange={(e) => type(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
-          className="tabular w-full min-w-0 bg-transparent outline-none"
-        />
-        <span className="text-xs text-muted">{unit}</span>
-      </span>
-      {hint && <span className="text-xs text-muted">{hint}</span>}
-    </label>
+    <div className="flex flex-col gap-1">
+      <label className="flex flex-col gap-1">
+        <span className="text-xs font-medium text-muted">{label}</span>
+        <span className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 focus-within:border-accent">
+          <input
+            aria-describedby={hint ? hintId : undefined}
+            type="number"
+            inputMode="decimal"
+            min={min}
+            max={max}
+            step={step}
+            value={draft ?? session[field]}
+            onChange={(e) => type(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
+            className="tabular w-full min-w-0 bg-transparent outline-none"
+          />
+          <span className="text-xs text-muted">{unit}</span>
+        </span>
+      </label>
+      {hint && <span id={hintId} className="text-xs text-muted">{hint}</span>}
+    </div>
   );
 }
 
@@ -59,6 +64,7 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
 function PaceField({ session, onChange }: { session: Session; onChange: (patch: Partial<Session>) => void }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [bad, setBad] = useState(false);
+  const hintId = useId();
   const commit = () => {
     if (draft === null) return;
     const v = parsePace(draft);
@@ -69,23 +75,26 @@ function PaceField({ session, onChange }: { session: Session; onChange: (patch: 
     }
   };
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-muted">Pace</span>
-      <span className={`flex items-center gap-2 rounded-xl border bg-surface px-3 py-1.5 focus-within:border-accent ${bad ? "border-bad" : "border-line"}`}>
-        <input
-          inputMode="decimal"
-          placeholder="typical"
-          value={draft ?? fmtPace(session.paceSecKm)}
-          onChange={(e) => { setDraft(e.target.value); setBad(false); }}
-          onBlur={commit}
-          onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
-          aria-invalid={bad}
-          className="tabular w-full min-w-0 bg-transparent outline-none"
-        />
-        <span className="text-xs text-muted">/km</span>
-      </span>
-      <span className={`text-xs ${bad ? "text-bad" : "text-muted"}`}>{bad ? "Type a pace like 5:30" : "Sets your sweat rate"}</span>
-    </label>
+    <div className="flex flex-col gap-1">
+      <label className="flex flex-col gap-1">
+        <span className="text-xs font-medium text-muted">Pace</span>
+        <span className={`flex items-center gap-2 rounded-xl border bg-surface px-3 py-1.5 focus-within:border-accent ${bad ? "border-bad" : "border-line"}`}>
+          <input
+            inputMode="decimal"
+            placeholder="typical"
+            value={draft ?? fmtPace(session.paceSecKm)}
+            onChange={(e) => { setDraft(e.target.value); setBad(false); }}
+            onBlur={commit}
+            onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
+            aria-invalid={bad}
+            aria-describedby={hintId}
+            className="tabular w-full min-w-0 bg-transparent outline-none"
+          />
+          <span className="text-xs text-muted">/km</span>
+        </span>
+      </label>
+      <span id={hintId} className={`text-xs ${bad ? "text-bad" : "text-muted"}`}>{bad ? "Type a pace like 5:30" : "Blank = typical for the workout"}</span>
+    </div>
   );
 }
 
@@ -144,10 +153,25 @@ function ActivityPicker({ value, onChange }: { value: Activity; onChange: (a: Ac
 }
 const GUT_LABEL = { low: "New", moderate: "Some", high: "Trained" } as const;
 
-export default function PlanForm({ session, onChange }: { session: Session; onChange: (patch: Partial<Session>) => void }) {
+function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <fieldset className="flex flex-col gap-3">
+      <legend className="mb-1 text-xs font-semibold tracking-wide text-muted uppercase">{title}</legend>
+      {note && <p className="-mt-2 text-xs text-muted">{note}</p>}
+      {children}
+    </fieldset>
+  );
+}
+
+interface FormProps {
+  session: Session;
+  relevant: Relevant;
+  onChange: (patch: Partial<Session>) => void;
+}
+
+export default function PlanForm({ session, relevant, onChange }: FormProps) {
   const field = { session, onChange };
   const activity = DISCIPLINES[session.discipline].activity;
-  const indoor = DISCIPLINES[session.discipline].indoor;
   const pickDiscipline = (discipline: DisciplineId) => onChange({ discipline, effort: keepEffort(session.effort, discipline) });
   return (
     <Card title="Session">
@@ -164,24 +188,38 @@ export default function PlanForm({ session, onChange }: { session: Session; onCh
         </div>
         <details className="rounded-xl border border-line px-3">
           <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">More options</summary>
-          <div className="flex flex-col gap-3 pb-3">
-            {indoor && <Segmented label="Airflow" value={session.airflow} options={AIRFLOWS} labels={AIRFLOW_LABEL} onChange={(airflow) => onChange({ airflow })} />}
-            <div className="grid grid-cols-2 gap-3">
-              {activity === "run" ? <PaceField {...field} /> : <NumberField field="powerW" label="Average power" unit="W" hint="0 = typical for the workout" {...field} />}
-              <NumberField field="bodyKg" label="Body weight" unit="kg" {...field} />
-              <NumberField field="humidityPct" label="Humidity" unit="%" {...field} />
-              <NumberField field="altitudeM" label="Altitude" unit="m" {...field} />
-              <NumberField field="refillEveryMin" label="Refill every" unit="min" hint="Aid stations, shops; 0 = none" {...field} />
-              <NumberField field="caffeineMgKg" label="Caffeine cap" unit="mg/kg" hint="0 = none, 3 typical" {...field} />
-              <NumberField field="sweatRateLh" label="Sweat rate" unit="L/h" hint="0 = estimate it" {...field} />
-              <NumberField field="sweatSodiumMgL" label="Sweat sodium" unit="mg/L" hint="Typical 900" {...field} />
-            </div>
-            <Segmented label="Gut training" value={session.gut} options={GUT_LEVELS} labels={GUT_LABEL} onChange={(gut) => onChange({ gut })} />
-            {session.gut === "high" && (
-              <Check checked={session.highCarb} onChange={(highCarb) => onChange({ highCarb })}>Allow 90-120 g/h in races over 2.5 h</Check>
-            )}
-            <Check checked={session.practise} onChange={(practise) => onChange({ practise })}>Practise fueling on easy or short sessions</Check>
-            <Check checked={session.carbLoaded} onChange={(carbLoaded) => onChange({ carbLoaded })}>I carb-loaded in the 36-48 h before</Check>
+          <div className="flex flex-col gap-4 pb-3">
+            <Group title="Carbs" note="Carbs follow the workout, the duration and your gut training.">
+              {relevant.gut ? (
+                <Segmented label="Gut training" value={session.gut} options={GUT_LEVELS} labels={GUT_LABEL} onChange={(gut) => onChange({ gut })} />
+              ) : (
+                <p className="text-xs text-muted">This session needs little or no fuel, so gut training does not change it.</p>
+              )}
+              {relevant.highCarb && (
+                <Check checked={session.highCarb} onChange={(highCarb) => onChange({ highCarb })}>Allow 90-120 g/h (trained gut, race over 2.5 h)</Check>
+              )}
+              {relevant.practise && (
+                <Check checked={session.practise} onChange={(practise) => onChange({ practise })}>Practise fueling: train your gut, or after a fasted start or a second session today</Check>
+              )}
+            </Group>
+            <Group title="Fluid and sodium" note="These set your sweat rate, so they change fluid and sodium, not carbs.">
+              {relevant.airflow && <Segmented label="Airflow" value={session.airflow} options={AIRFLOWS} labels={AIRFLOW_LABEL} onChange={(airflow) => onChange({ airflow })} />}
+              <div className="grid grid-cols-2 gap-3">
+                {relevant.paceOrPower && (activity === "run" ? <PaceField {...field} /> : <NumberField field="powerW" label="Average power" unit="W" hint="0 = typical for the workout" {...field} />)}
+                <NumberField field="bodyKg" label="Body weight" unit="kg" {...field} />
+                <NumberField field="humidityPct" label="Humidity" unit="%" {...field} />
+                <NumberField field="sweatRateLh" label="Sweat rate" unit="L/h" hint="0 = estimate it" {...field} />
+                {relevant.sweatSodium && <NumberField field="sweatSodiumMgL" label="Sweat sodium" unit="mg/L" hint="Typical 900" {...field} />}
+              </div>
+              <Check checked={session.altitudeM >= ALTITUDE_FROM_M} onChange={(high) => onChange({ altitudeM: high ? 2500 : 0 })}>Above {ALTITUDE_FROM_M} m altitude</Check>
+            </Group>
+            {(relevant.caffeine || relevant.refill) && <Group title="Caffeine and refills">
+              <div className="grid grid-cols-2 gap-3">
+                {relevant.caffeine && <NumberField field="caffeineMgKg" label="Caffeine cap" unit="mg/kg" hint="0 = none, 3 typical" {...field} />}
+                {relevant.refill && <NumberField field="refillEveryMin" label="Refill every" unit="min" hint="Aid stations, shops; 0 = none" {...field} />}
+              </div>
+              {!relevant.caffeine && <p className="text-xs text-muted">Carry a caffeinated pack to set a caffeine cap.</p>}
+            </Group>}
           </div>
         </details>
       </div>
