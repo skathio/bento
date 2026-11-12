@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import {
   blockedReason, CARB_CURVES, caffeineCap, carbPlan, carbRatio, dryHeatLossW, estimateSweatRate, fluidCeiling, fluidPlanned, fluidTarget,
-  kindPreference, notesFor, onCurve, sodiumShare, sodiumTarget, targets, typicalRunSpeed,
+  carbIntensity, kindPreference, notesFor, onCurve, sodiumShare, sodiumTarget, targets, typicalRunSpeed,
 } from "../site/src/lib/factors.ts";
 import { DEFAULT_SETTINGS, toPlanInput } from "../site/src/lib/storage.ts";
 import { WORKOUTS, type PlanInput } from "../site/src/lib/types.ts";
@@ -212,4 +212,22 @@ test("targets too small for any pack become none", () => {
       assert.ok(t === 0 || t >= 10, `${w} ${m} min: ${t} g/h`);
     }
   }
+});
+
+test("power ÷ FTP and pace ÷ threshold pace set the carb intensity (training-zone bands)", () => {
+  const bike = (powerW: number) => carbIntensity({ sport: "ride", workout: "z2", durationMin: 180, gut: "moderate", highCarb: false, practise: false, powerW, ftpW: 250 });
+  assert.deepEqual([150, 185, 200, 230, 260].map(bike), ["z2", "z2", "endurance", "tempo", "race"]);
+  const run = (paceSecKm: number) => carbIntensity({ sport: "run", workout: "z2", durationMin: 180, gut: "moderate", highCarb: false, practise: false, paceSecKm, thresholdPaceSecKm: 270 });
+  assert.deepEqual([360, 300, 280, 260].map(run), ["z2", "endurance", "tempo", "race"]);
+  assert.equal(carbIntensity({ sport: "ride", workout: "tempo", durationMin: 180, gut: "moderate", highCarb: false, practise: false, powerW: 200 }), "tempo", "no FTP: keep the workout");
+  assert.equal(carbIntensity({ sport: "trail-run", workout: "ultra", durationMin: 600, gut: "moderate", highCarb: false, practise: false, paceSecKm: 300, thresholdPaceSecKm: 270 }), "ultra");
+});
+
+test("an 'easy' ride at 300 W with a 250 W FTP is fueled like a race and says why", () => {
+  const easy = at({ workout: "z2", durationMin: 90 });
+  assert.equal(carbPlan(easy).target, 0);
+  const hard = at({ workout: "z2", durationMin: 90, powerW: 300, ftpW: 250 });
+  assert.ok(carbPlan(hard).target >= 45, `${carbPlan(hard).target} g/h`);
+  assert.match(notesFor(hard, targets(hard)).join(" "), /At 120% of your FTP, carbs are planned for a race-level effort/);
+  assert.doesNotMatch(notesFor(at({ workout: "z2", durationMin: 90, powerW: 150, ftpW: 250 }), targets(at({ workout: "z2", durationMin: 90, powerW: 150, ftpW: 250 }))).join(" "), /of your FTP/);
 });

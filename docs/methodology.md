@@ -21,20 +21,35 @@ what it changes:
 
 | Group | Options | Shown when |
 | --- | --- | --- |
-| Carbs | gut training | the gut ceiling can change the target (not on sessions that need no fuel) |
+| Effort | power (bike) or pace (run) | no measured sweat rate, or intensity can change the carbs |
+| | FTP (bike) or threshold pace (run) | power or pace is entered and intensity can change the carbs |
+| Carbs | gut training | the gut ceiling can change the target |
 | | 90-120 g/h opt-in | trained gut, race, over 2.5 h |
 | | practise fueling | it would raise the target (easy or short sessions) |
-| Fluid and sodium | power (bike) or pace (run) | no measured sweat rate replaces the estimate |
-| | body weight, humidity, sweat rate, "above 2000 m" | always |
+| Fluid and sodium | body weight, humidity, sweat rate, "above 2000 m" | always |
 | | sweat sodium | the session needs sodium |
 | | airflow | indoor and treadmill |
 | Caffeine and refills | caffeine cap | a caffeinated pack is carried |
 | | refill every | outdoors, with something to carry |
 
 An option is shown only when changing it can change the plan; [`tests/options.test.ts`](../tests/options.test.ts)
-checks that across every type, workout and a range of durations. Carbs follow the workout,
-duration and gut training only: the review keeps them in absolute g/h (A5), so body weight, power,
-pace and weather change fluid and sodium, not carbs. Altitude is a yes/no question because the rules
+checks that across every type, workout and a range of durations. Carbs follow the effort,
+duration and gut training only: the review keeps them in absolute g/h (A5), so body weight and
+weather change fluid and sodium, not carbs. Power or pace alone change fluid too; with an FTP or a
+threshold pace they also set the effort (below).
+
+### Effort from power or pace
+
+With power and FTP, or pace and threshold pace, carbs are planned at the intensity that effort
+represents rather than the workout picked, and a note says so when that changes the carbs. Ultras
+keep their own band. These bands are training-zone conventions, not from the evidence review.
+
+| Effort ÷ threshold | Bike (power ÷ FTP, Coggan zones) | Run (speed ÷ threshold speed, Daniels paces) |
+| --- | --- | --- |
+| Easy | below 76% | below 85% |
+| Steady | 76-85% | 85-93% |
+| Tempo | 86-95% | 94-99% |
+| Race | 96% and above | 100% and above | Altitude is a yes/no question because the rules
 only use it from 2000 m.
 
 | Pick | Sport | Terrain | Indoor | Basis |

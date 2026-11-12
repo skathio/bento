@@ -16,7 +16,13 @@ const PACK_SETS = [packsOf("gel-40", "bar", "drink-40"), packsOf("gel-40", "gel-
 /** The values each option is tried at; the option "matters" if any of them changes the plan. */
 const TRIES: Record<keyof Relevant, (s: Session) => Partial<Session>[]> = {
   gut: () => [{ gut: "low" }, { gut: "moderate" }, { gut: "high" }],
-  paceOrPower: () => [{ paceSecKm: 0, powerW: 0 }, { paceSecKm: 270, powerW: 300 }, { paceSecKm: 480, powerW: 100 }],
+  // Power or pace matter through sweat, or through a threshold the athlete adds next to them.
+  paceOrPower: () => [
+    { paceSecKm: 0, powerW: 0 },
+    { paceSecKm: 270, powerW: 300, ftpW: 250, thresholdPaceSecKm: 270 },
+    { paceSecKm: 480, powerW: 100, ftpW: 250, thresholdPaceSecKm: 270 },
+  ],
+  threshold: () => [{ ftpW: 0, thresholdPaceSecKm: 0 }, { ftpW: 150, thresholdPaceSecKm: 200 }, { ftpW: 400, thresholdPaceSecKm: 600 }],
   highCarb: () => [{ highCarb: false }, { highCarb: true }],
   practise: () => [{ practise: false }, { practise: true }],
   sweatSodium: () => [{ sweatSodiumMgL: 400 }, { sweatSodiumMgL: 1500 }],
@@ -39,7 +45,7 @@ interface Case {
 const CASES: Case[] = DISCIPLINE_IDS.flatMap((discipline) =>
   effortsFor(discipline).flatMap((effort) =>
     [30, 60, 90, 150, 240, 480].flatMap((durationMin) =>
-      ([{ gut: "moderate" }, { gut: "high" }, { sweatRateLh: 1.2 }] as Partial<Session>[]).flatMap((extra) =>
+      ([{ gut: "moderate" }, { gut: "high" }, { sweatRateLh: 1.2 }, { powerW: 200, paceSecKm: 330 }] as Partial<Session>[]).flatMap((extra) =>
         PACK_SETS.map((packs) => ({ session: { ...DEFAULT_SETTINGS.session, discipline, effort, durationMin, ...extra }, packs })),
       ),
     ),
