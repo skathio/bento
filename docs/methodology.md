@@ -44,8 +44,8 @@ With power and FTP, or pace and threshold pace, carbs are planned at the intensi
 represents rather than the workout picked, and a note says so when that changes the carbs. Ultras
 keep their own band. These bands are training-zone conventions, not from the evidence review.
 
-An FTP under 10 is read as W/kg and converted with body weight (no adult's FTP is under 10 W). A
-ratio no one can hold for a whole session (bike outside 40-150% of FTP, run outside 50-130% of
+FTP is entered in W/kg, the unit most riders know it in, and converted to watts with body weight;
+the hint shows the watts so the rider can check it. A ratio no one can hold for a whole session (bike outside 40-150% of FTP, run outside 50-130% of
 threshold speed) is treated as a typo: it is ignored and a note asks the athlete to check it.
 
 | Effort ÷ threshold | Bike (power ÷ FTP, Coggan zones) | Run (speed ÷ threshold speed, Daniels paces) |

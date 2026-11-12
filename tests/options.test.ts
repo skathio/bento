@@ -19,10 +19,10 @@ const TRIES: Record<keyof Relevant, (s: Session) => Partial<Session>[]> = {
   // Power or pace matter through sweat, or through a threshold the athlete adds next to them.
   paceOrPower: () => [
     { paceSecKm: 0, powerW: 0 },
-    { paceSecKm: 270, powerW: 300, ftpW: 250, thresholdPaceSecKm: 270 },
-    { paceSecKm: 480, powerW: 100, ftpW: 250, thresholdPaceSecKm: 270 },
+    { paceSecKm: 270, powerW: 300, ftpWkg: 3.5, thresholdPaceSecKm: 270 },
+    { paceSecKm: 480, powerW: 100, ftpWkg: 3.5, thresholdPaceSecKm: 270 },
   ],
-  threshold: () => [{ ftpW: 0, thresholdPaceSecKm: 0 }, { ftpW: 150, thresholdPaceSecKm: 200 }, { ftpW: 400, thresholdPaceSecKm: 600 }],
+  threshold: () => [{ ftpWkg: 0, thresholdPaceSecKm: 0 }, { ftpWkg: 2, thresholdPaceSecKm: 200 }, { ftpWkg: 6, thresholdPaceSecKm: 600 }],
   highCarb: () => [{ highCarb: false }, { highCarb: true }],
   practise: () => [{ practise: false }, { practise: true }],
   sweatSodium: () => [{ sweatSodiumMgL: 400 }, { sweatSodiumMgL: 1500 }],

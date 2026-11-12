@@ -60,16 +60,12 @@ const round = (v: number, step: number) => Number((Math.round(v / step) * step).
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 type CarbInput = Pick<PlanInput, "sport" | "workout" | "durationMin" | "gut" | "highCarb" | "practise"> &
-  Partial<Pick<PlanInput, "powerW" | "ftpW" | "paceSecKm" | "thresholdPaceSecKm" | "bodyKg">>;
+  Partial<Pick<PlanInput, "powerW" | "ftpWkg" | "paceSecKm" | "thresholdPaceSecKm" | "bodyKg">>;
 
-/** Riders often know FTP in W/kg; no adult's FTP in watts is this low, so smaller values are W/kg. */
-export const FTP_W_KG_BELOW = 10;
-
-/** FTP in watts, converting a W/kg entry with body weight; 0 when unknown. */
-export function ftpWatts(i: Pick<CarbInput, "ftpW" | "bodyKg">): number {
-  const ftp = i.ftpW ?? 0;
-  if (ftp <= 0) return 0;
-  return ftp < FTP_W_KG_BELOW ? Math.round(ftp * (i.bodyKg ?? 70)) : ftp;
+/** FTP in watts from the W/kg the athlete enters and their body weight; 0 when unknown. */
+export function ftpWatts(i: Pick<CarbInput, "ftpWkg" | "bodyKg">): number {
+  const wkg = i.ftpWkg ?? 0;
+  return wkg > 0 ? Math.round(wkg * (i.bodyKg ?? 70)) : 0;
 }
 
 /**
@@ -91,7 +87,7 @@ export function rawThresholdRatio(i: CarbInput): number | null {
 /** Whether effort could change the carbs at this duration: not for ultras or sessions every effort fuels alike. */
 export function intensityChangesCarbs(i: CarbInput): boolean {
   if (i.workout === "ultra") return false;
-  const bare = { ...i, powerW: 0, ftpW: 0, paceSecKm: 0, thresholdPaceSecKm: 0 };
+  const bare = { ...i, powerW: 0, ftpWkg: 0, paceSecKm: 0, thresholdPaceSecKm: 0 };
   const efforts: Workout[] = ["z2", "endurance", "tempo", "race"];
   return new Set(efforts.map((workout) => carbPlan({ ...bare, workout }).target)).size > 1;
 }
@@ -351,18 +347,17 @@ const RULES: Rule[] = [
     note: (i) => {
       const pct = Math.round((rawThresholdRatio(i) ?? 0) * 100);
       return i.sport === "ride"
-        ? `${i.powerW} W is ${pct}% of the FTP you entered, which no one holds for a whole session, so the FTP is ignored. Check it: enter it in watts (e.g. 250) or W/kg (e.g. 3.5).`
+        ? `${i.powerW} W is ${pct}% of the FTP you entered, which no one holds for a whole session, so the FTP is ignored. Check it is in W/kg, e.g. 3.5.`
         : `Your pace is ${pct}% of the threshold pace you entered, which is not possible for a whole session, so the threshold pace is ignored. Check it: it is about your 1-hour race pace.`;
     },
   },
   {
     // Only when the threshold actually moves the carbs, not just the label.
-    when: (i) => carbPlan(i).target !== carbPlan({ ...i, ftpW: 0, thresholdPaceSecKm: 0 }).target,
+    when: (i) => carbPlan(i).target !== carbPlan({ ...i, ftpWkg: 0, thresholdPaceSecKm: 0 }).target,
     note: (i) => {
       const pct = Math.round((thresholdRatio(i) ?? 0) * 100);
-      if (i.sport === "ride" && i.ftpW < FTP_W_KG_BELOW) return `At ${pct}% of your FTP (${ftpWatts(i)} W from ${i.ftpW} W/kg), carbs are planned for ${INTENSITY_WORDS[carbIntensity(i)]} effort, not the workout you picked.`;
-      const of = i.sport === "ride" ? "your FTP" : "your threshold pace";
-      return `At ${pct}% of ${of}, carbs are planned for ${INTENSITY_WORDS[carbIntensity(i)]} effort, not the workout you picked.`;
+      if (i.sport === "ride") return `At ${pct}% of your FTP (${ftpWatts(i)} W), carbs are planned for ${INTENSITY_WORDS[carbIntensity(i)]} effort, not the workout you picked.`;
+      return `At ${pct}% of your threshold pace, carbs are planned for ${INTENSITY_WORDS[carbIntensity(i)]} effort, not the workout you picked.`;
     },
   },
   {

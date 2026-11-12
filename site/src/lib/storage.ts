@@ -32,7 +32,7 @@ export const RANGES: Record<NumberKey, [number, number, number]> = {
   caffeineMgKg: [0, 6, 0.5],
   paceSecKm: [0, 1200, 5],
   powerW: [0, 600, 5],
-  ftpW: [0, 600, 0.1],
+  ftpWkg: [0, 8, 0.1],
   thresholdPaceSecKm: [0, 1200, 5],
   refillEveryMin: [0, 600, 15],
 };
@@ -41,7 +41,7 @@ export const DEFAULT_SETTINGS: Settings = {
   session: {
     discipline: "bike-road", effort: "bike-steady", durationMin: 180, bodyKg: 70, tempC: 18,
     humidityPct: 50, altitudeM: 0, sweatRateLh: 0, sweatSodiumMgL: 900, gut: "moderate", caffeineMgKg: 3,
-    airflow: "fan", paceSecKm: 0, powerW: 0, ftpW: 0, thresholdPaceSecKm: 0, highCarb: false, practise: false, refillEveryMin: 0,
+    airflow: "fan", paceSecKm: 0, powerW: 0, ftpWkg: 0, thresholdPaceSecKm: 0, highCarb: false, practise: false, refillEveryMin: 0,
   },
   selected: ["gel-40", "bar", "drink-40"],
   custom: [],
