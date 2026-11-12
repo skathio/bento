@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512" role="img" aria-label="Bento">
   <title>Bento</title>
-  <!-- A hinomaru bento seen from above, glowing in Bento's lacquer red in the skathio family's disc:
+  <!-- A hinomaru bento seen from above, glowing in Bento's ume in the skathio family's disc:
        the box, its divider, two side compartments and the umeboshi in the rice. -->
   <defs>
-    <radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#2a100c"/><stop offset="1" stop-color="#0b0c0f"/></radialGradient>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#2a0c1b"/><stop offset="1" stop-color="#0b0c0f"/></radialGradient>
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
   <circle cx="32" cy="32" r="31" fill="url(#g)"/>
-  <circle cx="32" cy="32" r="27" fill="none" stroke="#a1352b" stroke-width="2"/>
+  <circle cx="32" cy="32" r="27" fill="none" stroke="#a3245f" stroke-width="2"/>
   <g filter="url(#glow)">
-    <g fill="none" stroke="#ff806e" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <g fill="none" stroke="#ff85b8" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
       <rect x="16" y="20" width="32" height="24" rx="4.5"/>
       <path d="M33 20V44M33 32H48"/>
     </g>
-    <circle cx="24.5" cy="32" r="3" fill="#ff806e"/>
+    <circle cx="24.5" cy="32" r="3" fill="#ff85b8"/>
   </g>
 </svg>

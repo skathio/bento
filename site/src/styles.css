@@ -3,7 +3,7 @@
 /* Design tokens. Tailwind v4 exposes these as utilities (bg-surface, text-muted, ...).
    Each token holds both palettes through light-dark(), which follows color-scheme:
    the OS by default, or the theme pinned by data-theme on <html>. Components never
-   need dark: variants. Bento's look: rice-paper cream, black lacquer, vermilion. */
+   need dark: variants. Bento's look: rice-paper cream, black lacquer, ume (the pickled plum in the rice). */
 @theme {
   --color-bg: light-dark(#f7f2e7, #121011);
   --color-surface: light-dark(#fffdf8, #1b1819);
@@ -11,8 +11,10 @@
   --color-ink: light-dark(#1d1815, #ece6df);
   --color-muted: light-dark(#6c6158, #a69b92);
   --color-line: light-dark(#e3d9c4, #332d2c);
-  --color-accent: light-dark(#b0302a, #ff806e);
-  --color-on-accent: light-dark(#fffaf3, #1d0a07);
+  --color-accent: light-dark(#a3245f, #ff85b8);
+  --color-accent-hi: light-dark(#c13a78, #ffa3cb);
+  --color-accent-lo: light-dark(#7c1a49, #f06aa6);
+  --color-on-accent: light-dark(#fff8fb, #2a0716);
   --color-gel: light-dark(#a8650a, #f2b544);
   --color-gel-bg: light-dark(#fbefd8, #33260e);
   --color-solid: light-dark(#2f6e43, #7cc78f);
@@ -26,10 +28,10 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* Bento's lacquer fill: a deep red gradient for the brand mark and primary actions. */
+/* Bento's lacquer fill: an ume gradient for primary actions, per theme so text-on-accent stays readable. */
 @utility bg-lacquer {
   background-color: var(--color-accent);
-  background-image: linear-gradient(135deg, #d9473b 0%, #b0302a 55%, #7d1e19 100%);
+  background-image: linear-gradient(135deg, var(--color-accent-hi) 0%, var(--color-accent) 55%, var(--color-accent-lo) 100%);
 }
 
 @layer base {
