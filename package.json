@@ -1,0 +1,30 @@
+{
+  "name": "bento",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bento: carb, fluid and sodium fueling planner for rides, runs and trail runs (React + TypeScript, static)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "build": "node tools/build.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && mkdir -p coverage && node --test --experimental-test-coverage --test-coverage-include='site/src/lib/**' --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info 'tests/**/*.test.ts'"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.8",
+    "@types/node": "22.20.5",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "4.5.0",
+    "tailwindcss": "4.1.8",
+    "typescript": "6.0.3",
+    "vite": "6.4.5"
+  }
+}

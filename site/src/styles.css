@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Design tokens. Tailwind v4 exposes these as utilities (bg-surface, text-muted, ...).
+   Each token holds both palettes through light-dark(), which follows color-scheme:
+   the OS by default, or the theme pinned by data-theme on <html>. Components never
+   need dark: variants. Bento's look: rice-paper cream, black lacquer, vermilion. */
+@theme {
+  --color-bg: light-dark(#f7f2e7, #121011);
+  --color-surface: light-dark(#fffdf8, #1b1819);
+  --color-surface-2: light-dark(#efe8d8, #252122);
+  --color-ink: light-dark(#1d1815, #ece6df);
+  --color-muted: light-dark(#6c6158, #a69b92);
+  --color-line: light-dark(#e3d9c4, #332d2c);
+  --color-accent: light-dark(#b0302a, #ff806e);
+  --color-on-accent: light-dark(#fffaf3, #1d0a07);
+  --color-gel: light-dark(#a8650a, #f2b544);
+  --color-gel-bg: light-dark(#fbefd8, #33260e);
+  --color-solid: light-dark(#2f6e43, #7cc78f);
+  --color-solid-bg: light-dark(#e1f1e4, #15301f);
+  --color-drink: light-dark(#2c5a9e, #8ab0ec);
+  --color-drink-bg: light-dark(#e2ebf8, #16243a);
+  --color-warn: light-dark(#8a5a00, #f1c25f);
+  --color-warn-bg: light-dark(#fbf0d6, #33290e);
+  --color-bad: light-dark(#b3261e, #ff8a80);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Bento's lacquer fill: a deep red gradient for the brand mark and primary actions. */
+@utility bg-lacquer {
+  background-color: var(--color-accent);
+  background-image: linear-gradient(135deg, #d9473b 0%, #b0302a 55%, #7d1e19 100%);
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; color-scheme: light dark; -webkit-tap-highlight-color: transparent; }
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  a, button, summary, select, label { touch-action: manipulation; }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
+  input, select { background-color: var(--color-surface); color: var(--color-ink); }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  body { @apply bg-bg text-ink font-sans antialiased; }
+  summary { list-style: none; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after { transition: none; animation: none; }
+  }
+}
+
+@utility tabular { font-variant-numeric: tabular-nums; }
+@utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
