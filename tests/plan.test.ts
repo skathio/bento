@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 
-import { buildPlan, packingList, SLOT_MIN } from "../site/src/lib/plan.ts";
+import { buildPlan, HALF, MAX_DOSE_G, packingList, SLOT_MIN } from "../site/src/lib/plan.ts";
 import { PRESETS } from "../site/src/lib/products.ts";
 import { DEFAULT_SETTINGS, toPlanInput } from "../site/src/lib/storage.ts";
 import type { PlanInput } from "../site/src/lib/types.ts";
@@ -42,18 +42,27 @@ test("drinks are paced to the fluid target", () => {
   }
 });
 
-test("caffeine waits until 40% and stays under the cap", () => {
+test("long sessions take up to half the caffeine early, the rest from 30%, none in the last 30 min", () => {
   const i = input({ durationMin: 240, bodyKg: 50, caffeineMgKg: 3, packs: packs("gel-caf") });
   const plan = buildPlan(i);
   const caffeinated = plan.events.filter((e) => e.caffeineMg > 0);
   assert.ok(caffeinated.length > 0);
-  assert.ok(caffeinated.every((e) => e.minute >= 96));
+  const early = caffeinated.filter((e) => e.minute < 240 * 0.3).reduce((a, e) => a + e.caffeineMg, 0);
+  assert.ok(early <= plan.targets.caffeineCapMg / 2, `${early} mg early`);
+  assert.ok(caffeinated.every((e) => e.minute <= 210));
   assert.ok(plan.totals.caffeineMg <= plan.targets.caffeineCapMg);
   assert.equal(buildPlan({ ...i, caffeineMgKg: 0 }).totals.caffeineMg, 0);
 });
 
+test("sessions up to 90 min take caffeine only at the first prompt", () => {
+  const plan = buildPlan(input({ workout: "race", durationMin: 90, caffeineMgKg: 3, packs: packs("gel-caf", "gel-22") }));
+  const caffeinated = plan.events.filter((e) => e.caffeineMg > 0);
+  assert.ok(caffeinated.length > 0);
+  assert.ok(caffeinated.every((e) => e.minute === SLOT_MIN.ride));
+});
+
 test("road runs lean on gels; trail runs mix in solids", () => {
-  const kinds = (p: Partial<PlanInput>) => new Set(buildPlan(input({ ...p, packs: packs("gel-40", "chews"), durationMin: 240 })).events.map((e) => e.kind));
+  const kinds = (p: Partial<PlanInput>) => new Set(buildPlan(input({ ...p, packs: packs("gel-22", "chews"), durationMin: 240 })).events.map((e) => e.kind));
   assert.deepEqual(kinds({ sport: "run", terrain: "road" }), new Set(["gel"]));
   assert.ok(kinds({ sport: "trail-run", terrain: "trail" }).has("solid"));
 });
@@ -65,7 +74,7 @@ test("short sessions get no timeline", () => {
 });
 
 test("totals add water and the sodium gap", () => {
-  const plan = buildPlan(input({ packs: packs("gel-22"), tempC: 30, durationMin: 180 }));
+  const plan = buildPlan(input({ packs: packs("gel-22"), tempC: 30, durationMin: 240 }));
   assert.ok(plan.totals.waterMl > 0);
   assert.ok(plan.totals.sodiumGapMg > 0);
   assert.equal(plan.totals.carryVolumeMl, plan.events.length * 35);
@@ -116,21 +125,74 @@ test("carb drink mixes never go past the session's fluid target", () => {
   assert.ok(plan.totals.fluidMl <= (plan.targets.fluidMlPerHour * 75) / 60);
 });
 
-test("no 60 minutes take more carbs than the top of the band", () => {
-  const plan = buildPlan(input({ sport: "ride", workout: "endurance", gut: "low", durationMin: 480, packs: packs("drink-80", "electrolyte") }));
-  const carbs = plan.events.filter((e) => e.carbsG > 0);
-  assert.ok(carbs.length > 0);
-  for (const e of carbs) {
-    const hour = carbs.filter((x) => x.minute > e.minute - 60 && x.minute <= e.minute).reduce((a, x) => a + x.carbsG, 0);
-    assert.ok(hour <= Math.max(plan.targets.carbBand[1], e.carbsG), `${hour} g in the hour to ${e.minute}`);
+test("no 60 minutes take more than the hourly target plus one dose", () => {
+  for (const [sport, gut] of [["ride", "low"], ["run", "moderate"]] as const) {
+    const plan = buildPlan(input({ sport, workout: "endurance", gut, durationMin: 480, packs: packs("drink-80", "gel-40", "electrolyte") }));
+    const carbs = plan.events.filter((e) => e.carbsG > 0);
+    assert.ok(carbs.length > 0);
+    for (const e of carbs) {
+      const hour = carbs.filter((x) => x.minute > e.minute - 60 && x.minute <= e.minute).reduce((a, x) => a + x.carbsG, 0);
+      assert.ok(hour <= Math.max(plan.targets.carbsPerHour + MAX_DOSE_G[sport], e.carbsG), `${sport}: ${hour} g in the hour to ${e.minute}`);
+    }
   }
 });
 
-test("a caffeinated carb-free drink is scheduled after 40% and within the cap", () => {
+test("delivery meets the target with big packs: 40 g gels and a 65 g/h run target give 180-210 g over 3 h (evidence review B1)", () => {
+  const plan = buildPlan(input({ sport: "run", terrain: "road", workout: "race", durationMin: 180, packs: packs("gel-40") }));
+  assert.equal(plan.targets.carbsPerHour, 65);
+  assert.ok(plan.totals.carbsG >= 180 && plan.totals.carbsG <= 210, `${plan.totals.carbsG} g`);
+});
+
+test("delivery stays within max(±10 g/h, ±15%) of the target across sports and packs (evidence review B2)", () => {
+  const cases: Partial<PlanInput>[] = [
+    { sport: "ride", workout: "endurance", durationMin: 180, packs: packs("gel-40") },
+    { sport: "ride", workout: "race", durationMin: 240, gut: "high", packs: packs("drink-80", "gel-40") },
+    { sport: "run", workout: "endurance", durationMin: 180, packs: packs("gel-40", "drink-40") },
+    { sport: "trail-run", terrain: "trail", workout: "ultra", durationMin: 600, packs: packs("gel-22", "bar", "chews") },
+  ];
+  for (const c of cases) {
+    const plan = buildPlan(input(c));
+    const got = plan.totals.carbsG / ((c.durationMin as number) / 60);
+    const tolerance = Math.max(10, plan.targets.carbsPerHour * 0.15);
+    assert.ok(Math.abs(got - plan.targets.carbsPerHour) <= tolerance, `${c.sport} ${c.workout}: ${got.toFixed(0)} vs ${plan.targets.carbsPerHour}`);
+  }
+});
+
+test("runners take half of a big gel, and the packing list rounds halves up to whole gels", () => {
+  const plan = buildPlan(input({ sport: "run", workout: "endurance", durationMin: 180, packs: packs("gel-40") }));
+  const halves = plan.events.filter((e) => e.packId === "gel-40" + HALF);
+  assert.ok(halves.length > 0);
+  assert.ok(halves.every((e) => e.carbsG === 20 && e.name.startsWith("½")));
+  const servings = plan.events.reduce((a, e) => a + (e.packId.endsWith(HALF) ? 0.5 : 1), 0);
+  assert.deepEqual(plan.packing.map((l) => [l.packId, l.count]), [["gel-40", Math.ceil(servings)]]);
+  assert.equal(buildPlan(input({ sport: "ride", packs: packs("gel-40") })).events.some((e) => e.packId.endsWith(HALF)), false);
+});
+
+test("extreme heat replaces the plan with a warning", () => {
+  const plan = buildPlan(input({ sport: "run", workout: "race", durationMin: 120, tempC: 36, humidityPct: 80 }));
+  assert.ok(plan.blocked && /heat illness/.test(plan.blocked));
+  assert.deepEqual(plan.events, []);
+  assert.equal(buildPlan(input({ durationMin: 120 })).blocked, null);
+});
+
+test("with refill points, carry enough for the longest stretch", () => {
+  const plan = buildPlan(input({ durationMin: 360, refillEveryMin: 120, packs: packs("gel-40", "drink-40") }));
+  assert.ok(plan.stretches);
+  assert.equal(plan.stretches.count, 3);
+  for (const line of plan.stretches.carry) {
+    const total = plan.packing.find((l) => l.packId === line.packId)!.count;
+    assert.ok(line.count < total, `${line.packId}: carry ${line.count} of ${total}`);
+  }
+  assert.ok(plan.stretches.waterMl <= plan.totals.waterMl);
+  assert.equal(buildPlan(input({ durationMin: 360 })).stretches, null);
+  assert.equal(buildPlan(input({ durationMin: 100, refillEveryMin: 120 })).stretches, null);
+});
+
+test("a caffeinated carb-free drink follows the caffeine timing and cap", () => {
   const cola = { id: "custom-cola", name: "Zero cola", kind: "drink", carbsG: 0, sodiumMg: 20, caffeineMg: 100, fluidMl: 500, volumeMl: 500 } as const;
   const plan = buildPlan(input({ durationMin: 240, tempC: 25, caffeineMgKg: 3, packs: [...packs("gel-40"), cola] }));
   const sips = plan.events.filter((e) => e.packId === "custom-cola");
   assert.ok(sips.length > 0);
-  assert.ok(sips.every((e) => e.minute >= 240 * 0.4));
+  assert.ok(sips.every((e) => e.minute <= 210));
   assert.ok(plan.totals.caffeineMg <= plan.targets.caffeineCapMg);
 });

@@ -45,7 +45,7 @@ export default function App() {
         </div>
         <div className="flex flex-col gap-5">
           <Summary plan={plan} durationMin={settings.session.durationMin} />
-          <Timeline events={plan.events} fuelOwed={plan.targets.carbsPerHour > 0} />
+          <Timeline events={plan.events} fuelOwed={plan.targets.carbsPerHour > 0} blocked={plan.blocked !== null} />
         </div>
       </main>
       <footer className="border-t border-line py-6 text-xs text-muted">
