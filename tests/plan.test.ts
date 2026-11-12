@@ -196,3 +196,10 @@ test("a caffeinated carb-free drink follows the caffeine timing and cap", () => 
   assert.ok(sips.every((e) => e.minute <= 210));
   assert.ok(plan.totals.caffeineMg <= plan.targets.caffeineCapMg);
 });
+
+test("the coverage note appears only when the plan is really short of its target", () => {
+  const short = buildPlan(input({ sport: "run", terrain: "road", workout: "race", gut: "high", durationMin: 240, packs: packs("gel-22") }));
+  assert.ok(short.notes.some((n) => /These packs cover/.test(n)), "22 g gels every 20 min cannot reach 75 g/h");
+  const onTarget = buildPlan(input({ workout: "z2", durationMin: 140, packs: packs("gel-40") }));
+  assert.ok(!onTarget.notes.some((n) => /These packs cover/.test(n)));
+});

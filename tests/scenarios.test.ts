@@ -23,14 +23,14 @@ const S = (name: string, session: Partial<Session>, [carbs, fluid, sodium]: [Ran
 const SCENARIOS: Scenario[] = [
   S("1 ride z2 50 min", { discipline: "bike-road", effort: "bike-z2", durationMin: 50, tempC: 18, humidityPct: 50 }, [[0, 15], [0, 500], [0, 0]]),
   S("2 ride z2 3 h", { discipline: "bike-road", effort: "bike-z2", durationMin: 180, tempC: 18 }, [[30, 60], [400, 700], [0, 500]]),
-  S("3 ride endurance 90 min", { discipline: "bike-road", effort: "bike-endurance", durationMin: 90, tempC: 18 }, [[30, 60], [300, 750], [0, 400]]),
-  S("4 ride endurance 4 h hot", { discipline: "bike-road", effort: "bike-endurance", durationMin: 240, tempC: 25, humidityPct: 60 }, [[60, 75], [600, 900], [300, 700]]),
+  S("3 ride endurance 90 min", { discipline: "bike-road", effort: "bike-steady", durationMin: 90, tempC: 18 }, [[30, 60], [300, 750], [0, 400]]),
+  S("4 ride endurance 4 h hot", { discipline: "bike-road", effort: "bike-steady", durationMin: 240, tempC: 25, humidityPct: 60 }, [[60, 75], [600, 900], [300, 700]]),
   S("5a indoor tempo 75 min no fan", { discipline: "bike-indoor", effort: "bike-intervals", durationMin: 75, tempC: 22, airflow: "none" }, [[0, 45], [500, 900], [0, 500]]),
   S("5b indoor tempo 75 min fan", { discipline: "bike-indoor", effort: "bike-intervals", durationMin: 75, tempC: 22, airflow: "fan" }, [[0, 45], [400, 700], [0, 300]]),
-  S("6 gran fondo 5 h", { discipline: "bike-road", effort: "bike-fondo", durationMin: 300, tempC: 28, humidityPct: 40 }, [[60, 75], [600, 1000], [400, 800]]),
+  S("6 gran fondo 5 h (ridden steady)", { discipline: "bike-road", effort: "bike-steady", durationMin: 300, tempC: 28, humidityPct: 40 }, [[60, 75], [600, 1000], [400, 800]]),
   S("7 ride race 2 h", { discipline: "bike-road", effort: "bike-race", durationMin: 120, tempC: 20 }, [[60, 75], [500, 900], [0, 600]]),
   S("8 run easy 60 min", { discipline: "run-road", effort: "run-easy", durationMin: 60, tempC: 15 }, [[0, 20], [0, 400], [0, 0]]),
-  S("9 long run 2 h 30", { discipline: "run-road", effort: "run-long", durationMin: 150, tempC: 12 }, [[30, 60], [300, 600], [0, 500]]),
+  S("9 long run 2 h 30 (steady)", { discipline: "run-road", effort: "run-steady", durationMin: 150, tempC: 12 }, [[30, 60], [300, 600], [0, 500]]),
   S("10a marathon 3:30", { discipline: "run-road", effort: "run-race", durationMin: 210, tempC: 18, paceSecKm: 299 }, [[45, 75], [400, 750], [0, 600]]),
   S("10b marathon 4:45", { discipline: "run-road", effort: "run-race", durationMin: 285, tempC: 18, paceSecKm: 405 }, [[40, 65], [300, 600], [300, 600]]),
   S("11 treadmill tempo 60 min", { discipline: "run-treadmill", effort: "run-tempo", durationMin: 60, tempC: 21 }, [[0, 30], [300, 800], [0, 0]]),
@@ -38,6 +38,8 @@ const SCENARIOS: Scenario[] = [
   S("13 trail ultra 12 h", { discipline: "run-trail", effort: "run-ultra", durationMin: 720, tempC: 18, refillEveryMin: 90 }, [[30, 70], [400, 800], [300, 800]]),
 ];
 
+// The review planned "long run" and "gran fondo" at endurance intensity; Bento now asks for the
+// effort instead, so those scenarios use Steady. An easy 2.5 h run gets less (see factors tests).
 const planFor = (session: Partial<Session>) => buildPlan(toPlanInput({ ...DEFAULT_SETTINGS.session, ...session }, []));
 const inRange = (v: number, [lo, hi]: Range) => v >= lo && v <= hi;
 

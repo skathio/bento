@@ -3,26 +3,42 @@
 import type { Airflow, GutLevel, PackKind, PlanInput, Sport, Targets, Terrain, Workout } from "./types.ts";
 
 type Cell = readonly [lo: number, hi: number, target: number];
-const ZERO: Cell = [0, 0, 0];
+/** A point on a carb curve: from this many minutes on, this band and target (g/h). */
+type Anchor = readonly [minutes: number, lo: number, hi: number, target: number];
 
 /**
- * Carbs in g/h by intensity and duration (evidence review A1): under 45 min, 45-75 min,
- * 76-150 min and over 150 min. The 1-2.5 h cells follow the 2016 ACSM/AND/DC position.
+ * Carbs in g/h by intensity, as curves over duration (evidence review A1). The anchors sit on the
+ * review's matrix (none under 45 min; 1-2.5 h endurance 30-60 per ACSM 2016; up to 90 beyond
+ * 2.5 h) and Bento interpolates linearly between them, so one more minute never moves the plan by
+ * a whole row. The curves themselves are PC.
  */
-export const CARB_MATRIX: Record<Workout, readonly [Cell, Cell, Cell, Cell]> = {
-  z2: [ZERO, ZERO, [0, 30, 20], [30, 60, 45]],
-  endurance: [ZERO, ZERO, [30, 60, 45], [60, 90, 70]],
-  tempo: [ZERO, [0, 30, 15], [45, 60, 50], [60, 90, 70]],
-  race: [ZERO, [0, 30, 20], [60, 80, 70], [60, 90, 75]],
-  ultra: [ZERO, ZERO, [30, 60, 45], [30, 70, 50]],
+export const CARB_CURVES: Record<Workout, readonly Anchor[]> = {
+  z2: [[0, 0, 0, 0], [90, 0, 30, 0], [180, 30, 60, 45]],
+  endurance: [[0, 0, 0, 0], [60, 0, 0, 0], [90, 30, 60, 45], [150, 40, 70, 55], [180, 60, 90, 70]],
+  tempo: [[0, 0, 0, 0], [45, 0, 0, 0], [60, 0, 30, 10], [75, 0, 30, 25], [90, 30, 60, 45], [105, 45, 60, 50], [150, 50, 70, 55], [180, 60, 90, 70]],
+  race: [[0, 0, 0, 0], [45, 0, 0, 0], [60, 0, 30, 20], [75, 0, 30, 30], [105, 60, 80, 70], [150, 60, 80, 70], [180, 60, 90, 75]],
+  ultra: [[0, 0, 0, 0], [60, 0, 0, 0], [90, 30, 60, 40], [180, 30, 70, 50]],
 };
+/** Trained guts end higher on long races and ultras (A1, A4). */
+const TRAINED_TAIL: Partial<Record<Workout, Anchor>> = { race: [180, 60, 90, 90], ultra: [180, 30, 70, 60] };
+/** The opt-in 90-120 g/h band for trained guts in races over 2.5 h. */
+const HIGH_CARB_TAIL: readonly Anchor[] = [[150, 60, 80, 70], [180, 90, 120, 105]];
 
-/** Duration bucket for the matrix: <45, 45-75, 76-150, >150 min (the review's scenarios put 75 and 150 in the lower rows). */
-export function durationBucket(durationMin: number): 0 | 1 | 2 | 3 {
-  if (durationMin < 45) return 0;
-  if (durationMin <= 75) return 1;
-  if (durationMin <= 150) return 2;
-  return 3;
+/** The band and target on a curve at this duration, interpolated between anchors. */
+export function onCurve(curve: readonly Anchor[], minutes: number): Cell {
+  const first = curve[0]!;
+  if (minutes < 45) return [0, 0, 0];
+  let prev = first;
+  for (const next of curve) {
+    if (minutes <= next[0]) {
+      const span = next[0] - prev[0];
+      const f = span > 0 ? (minutes - prev[0]) / span : 1;
+      const mix = (k: 1 | 2 | 3) => prev[k] + f * (next[k] - prev[k]);
+      return [mix(1), mix(2), mix(3)];
+    }
+    prev = next;
+  }
+  return [prev[1], prev[2], prev[3]];
 }
 
 /** Running absorbs less than riding. Ultra bands already come from runners' data. */
@@ -46,17 +62,19 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 type CarbInput = Pick<PlanInput, "sport" | "workout" | "durationMin" | "gut" | "highCarb" | "practise">;
 
 /** Whether this session may use the 90-120 g/h band: trained gut, opted in, a race over 2.5 h. */
-const highCarbAllowed = (i: CarbInput) => i.highCarb && i.gut === "high" && i.workout === "race" && durationBucket(i.durationMin) === 3;
+const highCarbAllowed = (i: CarbInput) => i.highCarb && i.gut === "high" && i.workout === "race" && i.durationMin > 150;
 
-/** The matrix cell for the session, before the sport factor and gut ceiling. */
+function curveFor(i: CarbInput): readonly Anchor[] {
+  const base = CARB_CURVES[i.workout];
+  if (highCarbAllowed(i)) return [...base.filter((a) => a[0] < 150), ...HIGH_CARB_TAIL];
+  const tail = i.gut === "high" ? TRAINED_TAIL[i.workout] : undefined;
+  return tail ? [...base.slice(0, -1), tail] : base;
+}
+
+/** The curve's band and target for the session, before the sport factor and gut ceiling. */
 function rawCell(i: CarbInput): Cell {
-  const bucket = durationBucket(i.durationMin);
-  if (highCarbAllowed(i)) return [90, 120, 105];
-  let cell = CARB_MATRIX[i.workout][bucket];
-  if (i.workout === "z2" && bucket === 2 && i.durationMin <= 90) cell = [0, 30, 0];
-  if (i.gut === "high" && bucket === 3 && i.workout === "race") cell = [60, 90, 90];
-  if (i.gut === "high" && bucket === 3 && i.workout === "ultra") cell = [30, 70, 60];
-  if (cell[2] === 0 && i.practise && bucket > 0) cell = PRACTISE;
+  const cell = onCurve(curveFor(i), i.durationMin);
+  if (i.practise && i.durationMin >= 45 && cell[2] < PRACTISE[2]) return [Math.max(cell[0], PRACTISE[0]), Math.max(cell[1], PRACTISE[1]), PRACTISE[2]];
   return cell;
 }
 
@@ -64,14 +82,18 @@ function ceilingFor(i: CarbInput): number {
   return highCarbAllowed(i) ? HIGH_CARB_CEILING : GUT_CEILING[i.gut];
 }
 
-/** Band and target in g/h after the sport factor and the gut ceiling. */
+/** Below this, a target is too small for any pack to deliver, so it is none. */
+const MIN_TARGET_G_H = 10;
+
+/** Band and target in g/h after the sport factor and the gut ceiling, rounded to 5 g. */
 export function carbPlan(i: CarbInput): { band: [number, number]; target: number; limitedByGut: boolean } {
-  const [lo, hi, target] = rawCell(i);
+  const [lo, hi, raw] = rawCell(i);
   const factor = i.workout === "ultra" ? 1 : SPORT_GUT_FACTOR[i.sport];
   const ceiling = ceilingFor(i);
   const top = Math.min(round(hi * factor, 5), ceiling);
   const bottom = Math.min(round(lo * factor, 5), top);
-  return { band: [bottom, top], target: clamp(round(target * factor, 5), bottom, top), limitedByGut: round(hi * factor, 5) > ceiling };
+  const target = clamp(round(raw * factor, 5), bottom, top);
+  return { band: [bottom, top], target: target < MIN_TARGET_G_H ? 0 : target, limitedByGut: round(hi * factor, 5) > ceiling };
 }
 
 export const carbBand = (i: CarbInput): [number, number] => carbPlan(i).band;
@@ -107,11 +129,22 @@ export function dryHeatLossW(tempC: number): number {
   return 250;
 }
 
-type SweatInput = Pick<PlanInput, "sport" | "workout" | "terrain" | "indoor" | "airflow" | "bodyKg" | "tempC" | "humidityPct" | "altitudeM" | "paceSecKm" | "powerW">;
+type SweatInput = Pick<PlanInput, "sport" | "workout" | "terrain" | "indoor" | "airflow" | "bodyKg" | "tempC" | "humidityPct" | "altitudeM" | "paceSecKm" | "powerW" | "durationMin">;
+
+/**
+ * Typical running speed in m/s. Race pace depends on how long the race is: Riegel's fatigue
+ * exponent (time ∝ distance^1.06) makes a 45-min race faster than a 3.5 h one, from the 12 km/h
+ * marathon reference.
+ */
+export function typicalRunSpeed(i: Pick<PlanInput, "terrain" | "workout" | "durationMin">): number {
+  const kmh = TYPICAL_KMH[i.terrain][i.workout];
+  const race = i.workout === "race" ? Math.pow(Math.max(i.durationMin, 20) / 210, -0.06) : 1;
+  return (kmh * race) / 3.6;
+}
 
 /** Running sweat from metabolic heat: about 1 kcal per kg per km (evidence review C4). */
 function runSweat(i: SweatInput): number {
-  const speed = i.paceSecKm > 0 ? 1000 / i.paceSecKm : TYPICAL_KMH[i.terrain][i.workout] / 3.6;
+  const speed = i.paceSecKm > 0 ? 1000 / i.paceSecKm : typicalRunSpeed(i);
   const heatW = 4.2 * i.bodyKg * speed * (i.terrain === "trail" ? TRAIL_RUN_COST : 1);
   return (heatW - dryHeatLossW(i.tempC)) / W_PER_L_H;
 }
@@ -134,35 +167,51 @@ export function estimateSweatRate(i: SweatInput): number {
   return clamp(round(rate, 0.05), 0.15, 3.5);
 }
 
-/** Planned drinking ceilings in ml/h (evidence review C1): runners tolerate less, and long runs risk hyponatraemia. */
+/** 0 at `from` minutes, rising linearly to 1 at `to`. */
+const ramp = (minutes: number, from: number, to: number) => clamp((minutes - from) / (to - from), 0, 1);
+
+/**
+ * Planned drinking ceilings in ml/h (evidence review C1): runners tolerate less, and long runs risk
+ * hyponatraemia, so the running ceiling eases from 750 at 4 h to 600 at 5 h.
+ */
 export function fluidCeiling(sport: Sport, durationMin: number): number {
   if (sport === "ride") return 1000;
-  return durationMin > 240 ? 600 : 750;
+  return Math.round(750 - 150 * ramp(durationMin, 240, 300));
 }
 
 type FluidInput = Pick<PlanInput, "sport" | "durationMin" | "tempC" | "indoor">;
 
-/** Fluid in ml/h: about 60% of sweat, under the sport's ceiling, and always 200 ml/h below sweat losses. */
+/**
+ * Fluid in ml/h: about 60% of sweat, under the sport's ceiling, and always 200 ml/h below sweat
+ * losses. Short cool outdoor sessions need none; drinking eases in over the next 45 min (from
+ * 60 min, or from 30 min indoors or at 25 °C+) rather than switching on.
+ */
 export function fluidTarget(sweatRateLh: number, i: FluidInput): number {
-  if (i.durationMin <= 60 && i.tempC < 25 && !i.indoor) return 0;
+  const start = i.indoor || i.tempC >= 25 ? 30 : 60;
+  const share = ramp(i.durationMin, start, start + 45);
+  if (share <= 0) return 0;
   const floor = i.tempC < 5 ? 250 : 300;
-  const planned = Math.max(round(sweatRateLh * 600, 50), floor);
-  const belowSweat = round(sweatRateLh * 1000 - 200, 50);
-  return Math.max(0, Math.min(planned, fluidCeiling(i.sport, i.durationMin), belowSweat));
+  const planned = Math.max(sweatRateLh * 600, floor);
+  const belowSweat = sweatRateLh * 1000 - 200;
+  return Math.max(0, round(share * Math.min(planned, fluidCeiling(i.sport, i.durationMin), belowSweat), 50));
 }
 
 /** Plan fluid as a rate on long or hot sessions; otherwise it is a guide and thirst leads (evidence review C2). */
 export const fluidPlanned = (i: Pick<PlanInput, "durationMin" | "tempC">) => i.durationMin > 180 || i.tempC >= 25;
 
-/** Sodium matters on sessions of 4 h or more, or when drinking replaces 70% or more of sweat (evidence review C5). */
-export function sodiumNeeded(sweatRateLh: number, fluidMlPerHour: number, durationMin: number): boolean {
-  return durationMin >= 240 || (sweatRateLh > 0 && fluidMlPerHour >= 0.7 * sweatRateLh * 1000);
+/**
+ * How much of the full sodium replacement a session needs, 0 to 1 (evidence review C5): all of it
+ * when drinking replaces 70% or more of sweat, and on sessions of 4 h or more, easing in from 3 h
+ * so 4 h is not a cliff.
+ */
+export function sodiumShare(sweatRateLh: number, fluidMlPerHour: number, durationMin: number): number {
+  if (sweatRateLh > 0 && fluidMlPerHour >= 0.7 * sweatRateLh * 1000) return 1;
+  return ramp(durationMin, 180, 240);
 }
 
-/** Sodium in mg/h when needed: half of what the sweat carries away, up to 1000 mg/h. */
-export function sodiumTarget(sweatRateLh: number, sweatSodiumMgL: number, needed: boolean): number {
-  if (!needed) return 0;
-  return clamp(round(sweatRateLh * sweatSodiumMgL * 0.5, 50), 0, 1000);
+/** Sodium in mg/h: the needed share of half what the sweat carries away, up to 1000 mg/h. */
+export function sodiumTarget(sweatRateLh: number, sweatSodiumMgL: number, share: number): number {
+  return clamp(round(share * sweatRateLh * sweatSodiumMgL * 0.5, 50), 0, 1000);
 }
 
 /** Total caffeine cap for the session, in mg. */
@@ -189,17 +238,17 @@ export function targets(input: PlanInput): Targets {
   const sweat = input.sweatRateLh > 0 ? input.sweatRateLh : estimateSweatRate(input);
   const carbs = carbPlan(input);
   const fluid = fluidTarget(sweat, input);
-  const needed = sodiumNeeded(sweat, fluid, input.durationMin);
+  const sodium = sodiumTarget(sweat, input.sweatSodiumMgL, sodiumShare(sweat, fluid, input.durationMin));
   return {
     carbsPerHour: carbs.target,
     carbBand: carbs.band,
     fluidMlPerHour: fluid,
     sweatRateLh: sweat,
-    sodiumMgPerHour: sodiumTarget(sweat, input.sweatSodiumMgL, needed),
+    sodiumMgPerHour: sodium,
     caffeineCapMg: caffeineCap(input.bodyKg, input.caffeineMgKg),
     ratio: carbRatio(carbs.target),
     fluidPlanned: fluidPlanned(input),
-    sodiumNeeded: needed,
+    sodiumNeeded: sodium > 0,
   };
 }
 

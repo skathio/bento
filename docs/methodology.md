@@ -27,39 +27,51 @@ Everything beyond duration and temperature is optional and sits under "More opti
 | Run: treadmill | running | road | yes | As indoor cycling |
 | Run: trail | trail running | trail | no | |
 
-| Workout | Intensity | Offered for | Basis |
-| --- | --- | --- | --- |
-| Zone 2 (bike), Easy (run) | z2 | all types | A2 |
-| Endurance (bike), Long run, Gran fondo | endurance | all types; gran fondo road and gravel | A3: the endurance band is defensible for fondos and long runs |
-| Tempo / intervals | tempo | all types | A3: its own band, lower than endurance for short sessions |
-| Ultra | ultra | trail run | A4: its own band |
-| Race | race | outdoor types | Racing is not offered indoors or on a treadmill |
+Workouts name the effort only. Duration is its own input, so labels like "long run", "endurance
+ride" or "gran fondo" would describe the same session twice and give two different plans for it.
 
-Switching type keeps the workout if it is offered, else the first one at the nearest intensity.
+| Workout | Intensity | Offered for | Hint shown |
+| --- | --- | --- | --- |
+| Easy | z2 | all types | Bike: zone 2, you can talk in full sentences. Run: conversational pace, most long runs |
+| Steady | endurance | all types | Comfortably hard: group ride or sportive pace; around marathon effort |
+| Tempo / intervals | tempo | all types | Hard efforts at threshold or above, with recoveries |
+| Ultra | ultra | trail run | Many hours on trail, mixing running and hiking |
+| Race | race | outdoor types | As hard as you can hold for the distance. Not offered indoors or on a treadmill |
+
+The review planned "long run" and "gran fondo" at endurance intensity; in Bento those are Steady
+sessions, or Easy ones when ridden or run easy. Switching type keeps the workout if it is offered,
+else the first one at the nearest intensity.
 
 ## Carbohydrate
 
-Carbs per hour come from an intensity × duration matrix (A1), then the sport factor, then the gut
-ceiling. Cells are range / target in g/h.
+Carbs per hour come from a curve per intensity over duration (A1), then the sport factor, then the
+gut ceiling. The review gives a matrix with rows for under 45, 45-75, 75-150 and over 150 min.
+Applied as steps, one more minute could move a plan by 20-40 g/h (an easy run went from 15 to
+40 g/h between 150 and 151 min), so Bento places anchors on the matrix and interpolates linearly
+between them. Anchors are minutes: lo-hi / target g/h, before the sport factor.
 
-| Duration | z2 / easy | endurance | tempo | race | ultra |
-| --- | --- | --- | --- | --- | --- |
-| under 45 min | 0 | 0 | 0 | 0 | 0 |
-| 45-75 min | 0 | 0 | 0-30 / 15 | 0-30 / 20 | 0 |
-| 76-150 min | 0-30 / 0 up to 90 min, else 20 | 30-60 / 45 | 45-60 / 50 | 60-80 / 70 | 30-60 / 45 |
-| over 150 min | 30-60 / 45 | 60-90 / 70 | 60-90 / 70 | 60-90 / 75 | 30-70 / 50 |
+| Intensity | Anchors |
+| --- | --- |
+| z2 / easy | 90: 0-30 / 0 → 180: 30-60 / 45 |
+| endurance | 60: 0 → 90: 30-60 / 45 → 150: 40-70 / 55 → 180: 60-90 / 70 |
+| tempo | 45: 0 → 60: 0-30 / 10 → 75: 0-30 / 25 → 90: 30-60 / 45 → 105: 45-60 / 50 → 150: 50-70 / 55 → 180: 60-90 / 70 |
+| race | 45: 0 → 60: 0-30 / 20 → 75: 0-30 / 30 → 105: 60-80 / 70 → 150: 60-80 / 70 → 180: 60-90 / 75 |
+| ultra | 60: 0 → 90: 30-60 / 40 → 180: 30-70 / 50 |
+
+Under 45 min is always 0, and the last anchor holds for longer sessions. At every duration a harder
+intensity gets at least as many carbs as an easier one. Targets under 10 g/h are 0, since no pack can
+deliver them. Over 2.5 h steady and tempo share a target, as in the review; their fluid differs.
 
 | Rule | Value in Bento | Grade | Basis |
 | --- | --- | --- | --- |
-| Matrix, 1-2.5 h cells | as above | M-H | Thomas, Erdman & Burke 2016 ACSM/AND/DC position; Jeukendrup 2014 (guidelines are for well-trained athletes); Stellingwerff & Cox 2014 |
-| Matrix, intensity split | as above | PC | Review synthesis (A1) |
-| 75 and 150 min | fall in the lower rows | PC | The review's reference scenarios 5 and 9 |
-| Easy sessions | no carbs up to 90 min; 20-30 g/h (target 25) with "Practise fueling" | M / L-M | A2; Costa et al. 2017 gut training |
+| Anchors at 1-2.5 h | as above | M-H | Thomas, Erdman & Burke 2016 ACSM/AND/DC position; Jeukendrup 2014 (guidelines are for well-trained athletes); Stellingwerff & Cox 2014 |
+| Intensity split and interpolation | as above | PC | Review synthesis (A1); interpolation is Bento's |
+| Easy sessions | no carbs up to 90 min; at least 25 g/h (band 20-30) with "Practise fueling" | M / L-M | A2; Costa et al. 2017 gut training |
 | Sport factor | running and trail running ×0.85; cycling ×1; not applied to ultras | PC | A1, review table; the ultra band is runners' data (Tiller 2019) |
 | Gut ceiling | new 60, some 75, trained 90 g/h | M | Costa 2017, Podlogar 2022, Wilson 2025 |
-| Trained gut, long race | target 90 (60-90) | PC | A1 table |
-| Trained ultra | target 60 | PC | A4 |
-| 90-120 g/h | only with a trained gut, the opt-in, and a race over 150 min | M | No trial shows a gain above 90 g/h (Podlogar & Wallis 2022; Wilson 2025) |
+| Trained gut, long race | last anchor 60-90 / 90 | PC | A1 table |
+| Trained ultra | last anchor 30-70 / 60 | PC | A4 |
+| 90-120 g/h | only with a trained gut, the opt-in, and a race over 150 min; eases from 70 at 150 to 105 at 180 min | M | No trial shows a gain above 90 g/h (Podlogar & Wallis 2022; Wilson 2025) |
 | Trail and altitude bonus | removed | L/PC | No evidence found for either |
 | Glucose:fructose | advice only: 2:1 above 60 g/h, about 1:0.8 at 90 g/h+ | M | Podlogar 2022; Hearris 2022 |
 | Body mass | not used: carbs are absolute g/h | M/PC | Uptake is limited by intestinal transport (A5) |
@@ -70,6 +82,7 @@ ceiling. Cells are range / target in g/h.
 | --- | --- | --- | --- |
 | Prompts | every 15 min on the bike, 20 min running; nothing in the last 10 min | L/PC | B1; Costa 2017 (30 g every 20 min) |
 | When to take something | when the carbs owed by the next prompt exceed half the smallest serving | PC | B1: schedule against the cumulative target |
+| "Packs fall short" note | only when the plan is short by more than the tolerance and half the smallest pack | PC | Packs come whole, so a 40 g pack cannot hit a 20 g total exactly |
 | Rolling hour | carbs in any 60 min at most target + one dose (40 g bike, 30 g run) | PC | B1; replaces the band-top cap, which turned a 65 g/h target into 40 g/h |
 | Half gels | runners may take half of a gel over 30 g; the packing list rounds up | PC | B1, B3 |
 | Water with gels | 150-250 ml with each gel, counted in the fluid plan | PC | B3; Tiller 2019 |
@@ -83,7 +96,8 @@ ceiling. Cells are range / target in g/h.
 | Rule | Value in Bento | Grade | Basis |
 | --- | --- | --- | --- |
 | Sweat, running | (4.2 × mass × speed × 1.2 on trail − dry heat loss) ÷ 675 W per L/h; speed from pace, else typical for the workout | M/PC | C4; Gonzalez 2009, Jay 2024 a/b. 1.2 trail cost and typical speeds are PC |
-| Typical running speed | road z2 9.5, endurance 10, tempo 12.5, race 12 km/h; trail 8 / 8.5 / 10 / 10, ultra 8.5 | PC | Matches the review's scenarios 9, 10, 12, 13 |
+| Typical running speed | road z2 9.5, endurance 10, tempo 12.5, race 12 km/h at 3.5 h; trail 8 / 8.5 / 10 / 10, ultra 8.5 | PC | Matches the review's scenarios 9, 10, 12, 13 |
+| Race pace by duration | × (duration / 210 min)^−0.06 | M | Riegel's fatigue exponent: a 45-min race is faster than tempo, a marathon slower |
 | Dry heat loss | 250 W at 15-20 °C, −10 W per °C above 20, +10 W per °C below 15 | PC | C4 (below 15 °C is Bento's extension) |
 | Sweat, cycling | 0.8 L/h × intensity (z2 0.85, endurance 1, tempo 1.1, race 1.15, ultra 0.95) × mass/70 × heat (+3%/°C above 15 °C, floor 60%) × 1.05 off-road; × power ÷ typical power (z2 1.5, endurance 2.0, tempo 2.6, race 3.0 W/kg) when power is given | PC | The review's C4 formula cannot reproduce its own cycling scenarios at these W/kg, so cycling keeps the empirical model, which does (scenarios 2-7) |
 | Humidity | up to +20% above 60% RH | PC | Unverified (C4) |
@@ -92,11 +106,11 @@ ceiling. Cells are range / target in g/h.
 | Clamp | 0.15-3.5 L/h | M | SDA range (C4) |
 | Measured sweat rate | replaces the estimate | | Pre/post body-mass method |
 | Fluid target | 60% of sweat; at least 300 ml/h (250 below 5 °C); never above sweat − 200 ml/h | M | C1; Sawka 2007; Hew-Butler 2015 |
-| Fluid ceiling | cycling 1000 ml/h; running 750, or 600 over 4 h | M | C1; Almond 2005 (hyponatraemia in slower runners) |
-| No planned fluid | sessions up to 60 min below 25 °C outdoors | | |
+| Fluid ceiling | cycling 1000 ml/h; running 750 up to 4 h, easing to 600 at 5 h | M | C1; Almond 2005 (hyponatraemia in slower runners); the ease is Bento's, to avoid a step |
+| Short sessions | none up to 60 min outdoors below 25 °C, easing to the full rate by 105 min; indoors or at 25 °C+ from 30 min, full by 75 min | PC | Avoids a jump from nothing to 500 ml/h at 61 min |
 | Planned or guide | planned over 3 h or at 25 °C+; otherwise a guide, drink to thirst | M | C2; McCubbin 2020 |
-| Sodium needed | 4 h or more, or fluid at least 70% of sweat | M | C5; McCubbin 2025 |
-| Sodium target | 50% of sweat sodium lost, up to 1000 mg/h; default sweat sodium 900 mg/L | M | C5; Barnes 2019 normative mean ≈830 mg/L |
+| Sodium needed | in full at 4 h or more, or when fluid is at least 70% of sweat; easing in from 3 h | M | C5; McCubbin 2025. The ease from 3 h is Bento's, to avoid a step at 4 h |
+| Sodium target | that share of 50% of sweat sodium lost, up to 1000 mg/h; default sweat sodium 900 mg/L | M | C5; Barnes 2019 normative mean ≈830 mg/L |
 | Sodium not needed | optional, up to 500 mg/h to taste | M | C5 |
 
 ## Caffeine

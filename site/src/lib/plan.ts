@@ -201,11 +201,21 @@ export function totals(input: PlanInput, t: Targets, events: IntakeEvent[]): Tot
   };
 }
 
+/**
+ * How far below the session's carbs a plan may land and still count as on target: the larger of
+ * the review's tolerance (±10 g/h or ±15%, B2) and half the smallest pack, since packs come whole.
+ */
+export function shortfallAllowance(input: PlanInput, t: Targets): number {
+  const hours = input.durationMin / 60;
+  const smallest = Math.min(...servings(input).filter((p) => p.carbsG > 0).map((p) => p.carbsG), Infinity);
+  return Math.max(Math.max(10, t.carbsPerHour * 0.15) * hours, Number.isFinite(smallest) ? smallest / 2 : 0);
+}
+
 function coverageNotes(input: PlanInput, t: Targets, sums: Totals): string[] {
   const notes: string[] = [];
   const owed = (t.carbsPerHour * input.durationMin) / 60;
   if (owed > 0 && !input.packs.some((p) => p.carbsG > 0)) notes.push("Add at least one pack with carbs to build a timeline.");
-  else if (owed > 0 && sums.carbsG < owed * 0.85) notes.push(`These packs cover ${Math.round(sums.carbsG)} g of the ${Math.round(owed)} g target. Add a bigger or different pack.`);
+  else if (owed > 0 && sums.carbsG < owed - shortfallAllowance(input, t)) notes.push(`These packs cover ${Math.round(sums.carbsG)} g of the ${Math.round(owed)} g target. Add a bigger or different pack.`);
   if (sums.sodiumGapMg > 0 && t.sodiumNeeded) notes.push(`Cover about ${sums.sodiumGapMg} mg more sodium with electrolyte tabs, capsules or salty food.`);
   if (sums.carbsG > 0) notes.push("Pack one spare of your main product in case one drops or a refill point runs out.");
   return notes;

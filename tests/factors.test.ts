@@ -2,8 +2,8 @@ import { strict as assert } from "node:assert";
 import { test } from "node:test";
 
 import {
-  blockedReason, caffeineCap, carbPlan, carbRatio, dryHeatLossW, durationBucket, estimateSweatRate, fluidPlanned, fluidTarget,
-  kindPreference, notesFor, sodiumNeeded, sodiumTarget, targets,
+  blockedReason, CARB_CURVES, caffeineCap, carbPlan, carbRatio, dryHeatLossW, estimateSweatRate, fluidCeiling, fluidPlanned, fluidTarget,
+  kindPreference, notesFor, onCurve, sodiumShare, sodiumTarget, targets, typicalRunSpeed,
 } from "../site/src/lib/factors.ts";
 import { DEFAULT_SETTINGS, toPlanInput } from "../site/src/lib/storage.ts";
 import { WORKOUTS, type PlanInput } from "../site/src/lib/types.ts";
@@ -13,27 +13,42 @@ const at = (patch: Partial<PlanInput>): PlanInput => ({ ...base, ...patch });
 
 const carb = (p: Partial<PlanInput>) => carbPlan(at(p));
 
-test("carbs follow the intensity × duration matrix (evidence review A1)", () => {
+test("carbs sit on the review's matrix at its anchor durations (evidence review A1)", () => {
   const ride = (workout: PlanInput["workout"], durationMin: number) => carb({ sport: "ride", workout, durationMin, gut: "high" });
   assert.deepEqual(ride("endurance", 90).band, [30, 60]);
   assert.equal(ride("endurance", 90).target, 45);
   assert.equal(ride("endurance", 240).target, 70);
-  assert.equal(ride("tempo", 60).target, 15);
+  assert.equal(ride("tempo", 60).target, 10);
   assert.equal(ride("tempo", 120).target, 50);
   assert.equal(ride("race", 120).target, 70);
   assert.equal(ride("z2", 180).target, 45);
   assert.equal(ride("ultra", 600).target, 60);
-  for (const w of WORKOUTS) assert.deepEqual(ride(w, 30).band, [0, 0], w);
+  for (const w of WORKOUTS) assert.deepEqual(ride(w, 44).band, [0, 0], w);
 });
 
-test("matrix buckets break at 45, 75 and 150 minutes, with 75 and 150 in the lower rows", () => {
-  assert.deepEqual([44, 45, 75, 76, 150, 151].map(durationBucket), [0, 1, 1, 2, 2, 3]);
+test("carb curves interpolate between anchors and never step", () => {
+  assert.deepEqual(onCurve([[0, 0, 0, 0], [90, 0, 30, 0], [180, 30, 60, 45]], 135), [15, 45, 22.5]);
+  for (const w of WORKOUTS) {
+    for (let m = 45; m < 720; m++) {
+      const a = onCurve(CARB_CURVES[w], m);
+      const b = onCurve(CARB_CURVES[w], m + 1);
+      assert.ok(Math.abs(b[2] - a[2]) <= 2, `${w} jumps ${a[2]} → ${b[2]} at ${m} min`);
+      assert.ok(b[2] >= a[2], `${w} falls at ${m} min`);
+    }
+  }
+});
+
+test("at any duration, more intensity never means fewer carbs", () => {
+  for (let m = 45; m <= 600; m += 5) {
+    const t = (workout: PlanInput["workout"]) => carb({ workout, durationMin: m }).target;
+    assert.ok(t("z2") <= t("endurance") && t("endurance") <= t("tempo") && t("tempo") <= t("race"), `at ${m} min`);
+  }
 });
 
 test("easy sessions up to 90 minutes need no carbs unless the athlete practises fueling", () => {
   assert.equal(carb({ workout: "z2", durationMin: 50 }).target, 0);
   assert.equal(carb({ workout: "z2", durationMin: 90 }).target, 0);
-  assert.equal(carb({ workout: "z2", durationMin: 120 }).target, 20);
+  assert.equal(carb({ workout: "z2", durationMin: 150 }).target, 30);
   assert.equal(carb({ workout: "z2", durationMin: 50, practise: true }).target, 25);
   assert.equal(carb({ workout: "z2", durationMin: 30, practise: true }).target, 0);
 });
@@ -41,6 +56,7 @@ test("easy sessions up to 90 minutes need no carbs unless the athlete practises 
 test("running takes 0.85 of the riding band, except ultras whose band is runners' data", () => {
   assert.equal(carb({ sport: "run", workout: "race", durationMin: 210 }).target, 65);
   assert.equal(carb({ sport: "trail-run", workout: "race", durationMin: 240 }).target, 65);
+  assert.equal(carb({ sport: "run", workout: "z2", durationMin: 150 }).target, 25);
   assert.equal(carb({ sport: "trail-run", workout: "ultra", durationMin: 720 }).target, 50);
 });
 
@@ -51,6 +67,7 @@ test("gut ceilings are 60/75/90, and 90-120 g/h needs a trained gut, an opt-in a
   assert.deepEqual(carb({ workout: "race", durationMin: 240, gut: "high", highCarb: true }).band, [90, 120]);
   assert.equal(carb({ workout: "race", durationMin: 240, gut: "moderate", highCarb: true }).target, 75);
   assert.equal(carb({ workout: "race", durationMin: 120, gut: "high", highCarb: true }).target, 70);
+  assert.equal(carb({ workout: "race", durationMin: 165, gut: "high", highCarb: true }).target, 90, "eases into the high band");
   assert.equal(carb({ workout: "race", durationMin: 240, gut: "low" }).limitedByGut, true);
 });
 
@@ -103,13 +120,22 @@ test("fluid is about 60% of sweat, under the sport ceiling and 200 ml/h below sw
   assert.ok(f(1, { durationMin: 40, tempC: 30 }) > 0);
 });
 
-test("sodium is needed for 4 h or more, or when drinking covers 70% of sweat (evidence review C5)", () => {
-  assert.equal(sodiumNeeded(1, 600, 180), false);
-  assert.equal(sodiumNeeded(1, 600, 240), true);
-  assert.equal(sodiumNeeded(1, 700, 120), true);
-  assert.equal(sodiumTarget(1, 900, true), 450);
-  assert.equal(sodiumTarget(3, 2500, true), 1000);
-  assert.equal(sodiumTarget(1, 900, false), 0);
+test("sodium eases in from 3 h to full at 4 h, or is full when drinking covers 70% of sweat (evidence review C5)", () => {
+  assert.equal(sodiumShare(1, 600, 180), 0);
+  assert.equal(sodiumShare(1, 600, 210), 0.5);
+  assert.equal(sodiumShare(1, 600, 240), 1);
+  assert.equal(sodiumShare(1, 700, 120), 1);
+  assert.equal(sodiumTarget(1, 900, 1), 450);
+  assert.equal(sodiumTarget(1, 900, 0.5), 250);
+  assert.equal(sodiumTarget(3, 2500, 1), 1000);
+  assert.equal(sodiumTarget(1, 900, 0), 0);
+});
+
+test("fluid eases in instead of switching on, and the running ceiling eases from 750 to 600", () => {
+  const f = (durationMin: number, p: Partial<PlanInput> = {}) => fluidTarget(1, { sport: "ride", durationMin, tempC: 20, indoor: false, ...p });
+  assert.deepEqual([60, 75, 105].map((m) => f(m)), [0, 200, 600]);
+  assert.deepEqual([30, 45, 75].map((m) => f(m, { indoor: true })), [0, 200, 600]);
+  assert.deepEqual([240, 270, 300].map((m) => fluidCeiling("run", m)), [750, 675, 600]);
 });
 
 test("fluid is planned on long or hot sessions, otherwise a guide", () => {
@@ -168,4 +194,20 @@ test("notes cover the extra factors when they apply", () => {
   assert.match(notes({ indoor: true, airflow: "none" }), /Without a fan/);
   assert.match(notes({ workout: "ultra", sport: "trail-run", terrain: "trail", durationMin: 600 }), /protein/);
   assert.match(notes({ sweatRateLh: 0 }), /Sweat rate is estimated/);
+});
+
+test("a short race is run faster than tempo, a marathon slower", () => {
+  const speed = (workout: PlanInput["workout"], durationMin: number) => typicalRunSpeed({ terrain: "road", workout, durationMin });
+  assert.ok(speed("race", 45) > speed("tempo", 45));
+  assert.ok(speed("race", 210) < speed("tempo", 210));
+  assert.equal(Math.round(speed("race", 210) * 3.6 * 10) / 10, 12);
+});
+
+test("targets too small for any pack become none", () => {
+  for (let m = 45; m <= 720; m += 5) {
+    for (const w of WORKOUTS) {
+      const t = carb({ workout: w, durationMin: m, gut: "low" }).target;
+      assert.ok(t === 0 || t >= 10, `${w} ${m} min: ${t} g/h`);
+    }
+  }
 });
