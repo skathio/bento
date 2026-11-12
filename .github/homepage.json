@@ -1,0 +1,12 @@
+{
+  "name": "Bento",
+  "kind": "Web app",
+  "tagline": "Carbs, fluid and sodium for rides and runs: an intake timeline and packing list from your effort, duration and fuel.",
+  "tags": [
+    "React",
+    "Cycling",
+    "Running"
+  ],
+  "colour": "#ff85b8",
+  "image": "site/favicon.svg"
+}
