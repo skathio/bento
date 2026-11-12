@@ -32,7 +32,7 @@ export const RANGES: Record<NumberKey, [number, number, number]> = {
   caffeineMgKg: [0, 6, 0.5],
   paceSecKm: [0, 1200, 5],
   powerW: [0, 600, 5],
-  ftpW: [0, 600, 5],
+  ftpW: [0, 600, 0.1],
   thresholdPaceSecKm: [0, 1200, 5],
   refillEveryMin: [0, 600, 15],
 };

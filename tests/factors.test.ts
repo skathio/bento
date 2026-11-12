@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import {
   blockedReason, CARB_CURVES, caffeineCap, carbPlan, carbRatio, dryHeatLossW, estimateSweatRate, fluidCeiling, fluidPlanned, fluidTarget,
-  carbIntensity, kindPreference, notesFor, onCurve, sodiumShare, sodiumTarget, targets, typicalRunSpeed,
+  carbIntensity, ftpWatts, kindPreference, notesFor, onCurve, sodiumShare, sodiumTarget, targets, typicalRunSpeed,
 } from "../site/src/lib/factors.ts";
 import { DEFAULT_SETTINGS, toPlanInput } from "../site/src/lib/storage.ts";
 import { WORKOUTS, type PlanInput } from "../site/src/lib/types.ts";
@@ -230,4 +230,26 @@ test("an 'easy' ride at 300 W with a 250 W FTP is fueled like a race and says wh
   assert.ok(carbPlan(hard).target >= 45, `${carbPlan(hard).target} g/h`);
   assert.match(notesFor(hard, targets(hard)).join(" "), /At 120% of your FTP, carbs are planned for a race-level effort/);
   assert.doesNotMatch(notesFor(at({ workout: "z2", durationMin: 90, powerW: 150, ftpW: 250 }), targets(at({ workout: "z2", durationMin: 90, powerW: 150, ftpW: 250 }))).join(" "), /of your FTP/);
+});
+
+test("an FTP under 10 is read as W/kg and converted with body weight", () => {
+  assert.equal(ftpWatts({ ftpW: 3.3, bodyKg: 70 }), 231);
+  assert.equal(ftpWatts({ ftpW: 250, bodyKg: 70 }), 250);
+  assert.equal(ftpWatts({ ftpW: 0, bodyKg: 70 }), 0);
+  const ride = at({ workout: "z2", durationMin: 120, powerW: 200, ftpW: 3.3, bodyKg: 70 });
+  assert.equal(carbIntensity(ride), "tempo", "200 W of 231 W is 87%");
+  assert.match(notesFor(ride, targets(ride)).join(" "), /At 87% of your FTP \(231 W from 3.3 W\/kg\)/);
+});
+
+test("an impossible effort ÷ threshold is ignored, with a note to check it", () => {
+  const wrong = at({ workout: "z2", durationMin: 120, powerW: 200, ftpW: 20 });
+  assert.equal(carbIntensity(wrong), "z2");
+  assert.equal(carbPlan(wrong).target, carbPlan(at({ workout: "z2", durationMin: 120 })).target);
+  assert.match(notesFor(wrong, targets(wrong)).join(" "), /1000% of the FTP you entered.*ignored/);
+  assert.doesNotMatch(notesFor(wrong, targets(wrong)).join(" "), /carbs are planned for/);
+  const run = at({ sport: "run", workout: "z2", durationMin: 120, paceSecKm: 360, thresholdPaceSecKm: 150 });
+  assert.equal(carbIntensity(run), "z2");
+  assert.match(notesFor(run, targets(run)).join(" "), /threshold pace is ignored/);
+  const ok = at({ workout: "z2", durationMin: 120, powerW: 300, ftpW: 250 });
+  assert.equal(carbIntensity(ok), "race", "120% is hard but possible");
 });

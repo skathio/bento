@@ -1,8 +1,7 @@
 // Which optional inputs can change this session's plan. The form shows an option only when it
 // does, so every visible field matters; tests/options.test.ts checks that each option shown
 // changes the plan and each option hidden does not.
-import { carbPlan, targets } from "./factors.ts";
-import { WORKOUTS } from "./types.ts";
+import { carbPlan, intensityChangesCarbs, targets } from "./factors.ts";
 import { buildPlan } from "./plan.ts";
 import type { FuelPack, PlanInput } from "./types.ts";
 
@@ -39,9 +38,7 @@ export function relevantOptions(input: PlanInput, packs: FuelPack[]): Relevant {
   const withoutPractice = carbPlan({ ...input, practise: false }).target;
   const withPractice = carbPlan({ ...input, practise: true }).target;
   const gutTargets = new Set((["low", "moderate", "high"] as const).map((gut) => JSON.stringify(carbPlan({ ...input, gut }))));
-  const bare = { ...input, powerW: 0, ftpW: 0, paceSecKm: 0, thresholdPaceSecKm: 0 };
-  const intensityMatters =
-    input.workout !== "ultra" && new Set(WORKOUTS.filter((w) => w !== "ultra").map((workout) => carbPlan({ ...bare, workout }).target)).size > 1;
+  const intensityMatters = intensityChangesCarbs(input);
   const effortGiven = input.sport === "ride" ? input.powerW > 0 : input.paceSecKm > 0;
   return {
     gut: gutTargets.size > 1,
