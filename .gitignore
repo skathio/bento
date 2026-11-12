@@ -7,3 +7,6 @@ node_modules/
 .somi/
 .claude/audit.log
 .claude/somi-state/
+
+# Browser tool output (screenshots, snapshots, console logs)
+.playwright-mcp/
