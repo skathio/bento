@@ -1,0 +1,55 @@
+# Build, test, scan and deploy the site to GitHub Pages via the hashira
+# static-webapp flow (docs/flows/static-webapp.md in skathio/hashira).
+#
+# Pages must be enabled with "GitHub Actions" as the source. Deploys are
+# limited to main by the github-pages environment's branch policy.
+name: deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "tools/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - "tsconfig.json"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    # hashira main @ e4facc4, the same pin as maneki and pr.yml.
+    uses: skathio/hashira/.github/workflows/static-webapp-ci.yml@e4facc4ca8d8896285931a3b80a1a958584d1a85
+    permissions:
+      contents: read
+      id-token: write
+      pages: write
+      pull-requests: write
+      security-events: write
+    with:
+      node_version: "22"
+      build_command: "npm run build"
+      output_dir: "dist"
+      test_command: "npm test"
+      coverage_path: "coverage/lcov.info"
+      library_ref: "e4facc4ca8d8896285931a3b80a1a958584d1a85"
+  deploy:
+    needs: ci
+    # A manual run on another branch builds and checks it but never deploys it.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: github-pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: skathio/hashira/.github/actions/pages-deploy@e4facc4ca8d8896285931a3b80a1a958584d1a85

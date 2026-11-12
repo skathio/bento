@@ -1,0 +1,9 @@
+# Build and test output
+dist/
+coverage/
+node_modules/
+
+# Local agent/session state: never commit
+.somi/
+.claude/audit.log
+.claude/somi-state/

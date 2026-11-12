@@ -1,0 +1,18 @@
+# Weekly update PRs for Bento's GitHub Actions pins and npm packages.
+#
+# The hashira workflows repeat their SHA in the `library_ref` input, which the
+# github-actions ecosystem does not rewrite. When Dependabot bumps a hashira
+# `uses:` pin, update `library_ref` in deploy.yml and pr.yml to the same SHA in
+# that PR; tests/ci.test.ts fails until the three match.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

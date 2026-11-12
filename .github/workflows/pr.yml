@@ -1,0 +1,27 @@
+# Verify every pull request before it reaches main: the same hashira static-webapp
+# CI that deploy.yml runs on push (build, npm test with coverage, scan suite).
+#
+# The pinned hashira ref must match deploy.yml's, so a PR is checked exactly the
+# way main will be built.
+name: pr
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  ci:
+    uses: skathio/hashira/.github/workflows/static-webapp-ci.yml@e4facc4ca8d8896285931a3b80a1a958584d1a85
+    permissions:
+      contents: read
+      id-token: write
+      pages: write
+      pull-requests: write
+      security-events: write
+    with:
+      node_version: "22"
+      build_command: "npm run build"
+      output_dir: "dist"
+      test_command: "npm test"
+      coverage_path: "coverage/lcov.info"
+      library_ref: "e4facc4ca8d8896285931a3b80a1a958584d1a85"
