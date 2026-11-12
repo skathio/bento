@@ -1,14 +1,16 @@
 // The athlete's settings, kept per device in localStorage. Reading is defensive:
 // anything missing or out of range falls back to a default, so a stale or edited
 // entry never breaks the page.
+import { DISCIPLINE_IDS, EFFORT_IDS, keepEffort, modelOf, type DisciplineId, type EffortId } from "./activities.ts";
 import { asPack, PRESETS } from "./products.ts";
-import { GUT_LEVELS, SPORTS, TERRAINS, WORKOUTS, type FuelPack, type PlanInput } from "./types.ts";
+import { GUT_LEVELS, type FuelPack, type PlanInput } from "./types.ts";
 
 const STORE = "bento.settings.v1";
 /** Most custom packs kept; the storage origin is shared, so an entry may be oversized. */
 export const CUSTOM_MAX = 50;
 
-export type Session = Omit<PlanInput, "packs">;
+/** What the form holds: the discipline and workout picked, from which the model's sport, terrain and intensity follow. */
+export type Session = Omit<PlanInput, "packs" | "sport" | "terrain" | "workout"> & { discipline: DisciplineId; effort: EffortId };
 type NumberKey = { [K in keyof Session]: Session[K] extends number ? K : never }[keyof Session];
 
 export interface Settings {
@@ -32,7 +34,7 @@ export const RANGES: Record<NumberKey, [number, number, number]> = {
 
 export const DEFAULT_SETTINGS: Settings = {
   session: {
-    sport: "ride", workout: "endurance", terrain: "road", durationMin: 180, bodyKg: 70, tempC: 18,
+    discipline: "bike-road", effort: "bike-endurance", durationMin: 180, bodyKg: 70, tempC: 18,
     humidityPct: 50, altitudeM: 0, sweatRateLh: 0, sweatSodiumMgL: 900, gut: "moderate", caffeineMgKg: 3, carbLoaded: false,
   },
   selected: ["gel-40", "bar", "drink-40"],
@@ -64,6 +66,18 @@ function number(key: NumberKey, v: unknown): number {
   return typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : DEFAULT_SETTINGS.session[key];
 }
 
+function activity(r: Record<string, unknown>): Pick<Session, "discipline" | "effort"> {
+  const d = DEFAULT_SETTINGS.session;
+  const discipline = pick(DISCIPLINE_IDS, r.discipline, d.discipline);
+  return { discipline, effort: keepEffort(pick(EFFORT_IDS, r.effort, d.effort), discipline) };
+}
+
+/** The planner's input for a session and the packs carried. */
+export function toPlanInput(session: Session, packs: FuelPack[]): PlanInput {
+  const { discipline, effort, ...rest } = session;
+  return { ...rest, ...modelOf(discipline, effort), packs };
+}
+
 export function parseSession(raw: unknown): Session {
   const r = (typeof raw === "object" && raw !== null ? raw : {}) as Record<string, unknown>;
   const d = DEFAULT_SETTINGS.session;
@@ -71,9 +85,7 @@ export function parseSession(raw: unknown): Session {
   return {
     ...d,
     ...numbers,
-    sport: pick(SPORTS, r.sport, d.sport),
-    workout: pick(WORKOUTS, r.workout, d.workout),
-    terrain: pick(TERRAINS, r.terrain, d.terrain),
+    ...activity(r),
     gut: pick(GUT_LEVELS, r.gut, d.gut),
     carbLoaded: r.carbLoaded === true,
   };

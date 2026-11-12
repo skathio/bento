@@ -5,10 +5,10 @@ import {
   caffeineCap, carbBand, carbRatio, carbTarget, durationCeiling, estimateSweatRate, fluidTarget, kindPreference, notesFor,
   sodiumTarget, targets,
 } from "../site/src/lib/factors.ts";
-import { DEFAULT_SETTINGS } from "../site/src/lib/storage.ts";
+import { DEFAULT_SETTINGS, toPlanInput } from "../site/src/lib/storage.ts";
 import type { PlanInput } from "../site/src/lib/types.ts";
 
-const base: PlanInput = { ...DEFAULT_SETTINGS.session, packs: [] };
+const base: PlanInput = toPlanInput(DEFAULT_SETTINGS.session, []);
 const at = (patch: Partial<PlanInput>): PlanInput => ({ ...base, ...patch });
 
 test("carb bands follow the workout type", () => {

@@ -2,9 +2,10 @@
 
 A bento box packs a whole meal into neat compartments. This one packs your fuel.
 
-**Bento** plans carbohydrate, fluid, sodium and caffeine for **rides, runs and trail runs**. Pick the
-sport, the workout (zone 2, endurance or race), the terrain (road or trail) and the fuel you carry
-(gels, solids, drinks). Bento gives you:
+**Bento** plans carbohydrate, fluid, sodium and caffeine for **rides, runs and trail runs**. Pick Bike
+or Run, then the type (road, gravel, MTB or indoor; road, trail or treadmill), a workout offered for
+it (zone 2, endurance, intervals, gran fondo, ultra, race and more) and the fuel you carry (gels,
+solids, drinks). Bento gives you:
 
 - **Per-hour targets** for carbs (with a glucose:fructose ratio above 60 g/h), fluid, sodium and a caffeine cap.
 - **A timeline** of what to take and when.
