@@ -24,3 +24,22 @@ export function fmtFluid(ml: number): string {
 export const fmtGrams = (g: number): string => `${Math.round(g)} g`;
 export const fmtMg = (mg: number): string => `${Math.round(mg)} mg`;
 export const fmtBand = ([lo, hi]: readonly [number, number], unit: string): string => (lo === hi ? `${hi} ${unit}` : `${lo}-${hi} ${unit}`);
+
+/** Seconds per km as a running pace: 330 → "5:30". 0 (unknown) → "". */
+export function fmtPace(secKm: number): string {
+  if (secKm <= 0) return "";
+  const s = Math.round(secKm);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** A typed pace ("5:30", "5.30" or "5") as seconds per km, 0 when blank, or null when unreadable. */
+export function parsePace(text: string): number | null {
+  const t = text.trim();
+  if (t === "") return 0;
+  const m = /^(\d{1,2})(?:[:.](\d{1,2}))?$/.exec(t);
+  if (!m) return null;
+  const sec = Number(m[2] ?? 0);
+  if (sec > 59) return null;
+  const total = Number(m[1]) * 60 + sec;
+  return total >= 150 && total <= 1200 ? total : null;
+}

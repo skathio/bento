@@ -3,14 +3,14 @@
 // entry never breaks the page.
 import { DISCIPLINE_IDS, EFFORT_IDS, keepEffort, modelOf, type DisciplineId, type EffortId } from "./activities.ts";
 import { asPack, PRESETS } from "./products.ts";
-import { GUT_LEVELS, type FuelPack, type PlanInput } from "./types.ts";
+import { AIRFLOWS, GUT_LEVELS, type FuelPack, type PlanInput } from "./types.ts";
 
 const STORE = "bento.settings.v1";
 /** Most custom packs kept; the storage origin is shared, so an entry may be oversized. */
 export const CUSTOM_MAX = 50;
 
 /** What the form holds: the discipline and workout picked, from which the model's sport, terrain and intensity follow. */
-export type Session = Omit<PlanInput, "packs" | "sport" | "terrain" | "workout"> & { discipline: DisciplineId; effort: EffortId };
+export type Session = Omit<PlanInput, "packs" | "sport" | "terrain" | "workout" | "indoor"> & { discipline: DisciplineId; effort: EffortId };
 type NumberKey = { [K in keyof Session]: Session[K] extends number ? K : never }[keyof Session];
 
 export interface Settings {
@@ -30,12 +30,16 @@ export const RANGES: Record<NumberKey, [number, number, number]> = {
   sweatRateLh: [0, 3, 0.05],
   sweatSodiumMgL: [200, 2500, 50],
   caffeineMgKg: [0, 6, 0.5],
+  paceSecKm: [0, 1200, 5],
+  powerW: [0, 600, 5],
+  refillEveryMin: [0, 600, 15],
 };
 
 export const DEFAULT_SETTINGS: Settings = {
   session: {
     discipline: "bike-road", effort: "bike-endurance", durationMin: 180, bodyKg: 70, tempC: 18,
     humidityPct: 50, altitudeM: 0, sweatRateLh: 0, sweatSodiumMgL: 900, gut: "moderate", caffeineMgKg: 3, carbLoaded: false,
+    airflow: "fan", paceSecKm: 0, powerW: 0, highCarb: false, practise: false, refillEveryMin: 0,
   },
   selected: ["gel-40", "bar", "drink-40"],
   custom: [],
@@ -87,7 +91,10 @@ export function parseSession(raw: unknown): Session {
     ...numbers,
     ...activity(r),
     gut: pick(GUT_LEVELS, r.gut, d.gut),
+    airflow: pick(AIRFLOWS, r.airflow, d.airflow),
     carbLoaded: r.carbLoaded === true,
+    highCarb: r.highCarb === true,
+    practise: r.practise === true,
   };
 }
 

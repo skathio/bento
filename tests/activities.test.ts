@@ -26,14 +26,15 @@ test("workouts offered follow the sport and discipline", () => {
 test("switching discipline keeps the workout, or one at the same intensity", () => {
   assert.equal(keepEffort("run-race", "run-trail"), "run-race");
   assert.equal(keepEffort("run-ultra", "run-road"), "run-long");
-  assert.equal(keepEffort("bike-race", "bike-indoor"), "bike-endurance");
+  assert.equal(keepEffort("bike-race", "bike-indoor"), "bike-intervals");
   assert.equal(keepEffort("bike-endurance", "run-road"), "run-long");
 });
 
 test("each pick maps onto the planner's sport, terrain and intensity", () => {
-  assert.deepEqual(modelOf("run-trail", "run-ultra"), { sport: "trail-run", terrain: "trail", workout: "endurance" });
-  assert.deepEqual(modelOf("bike-gravel", "bike-race"), { sport: "ride", terrain: "trail", workout: "race" });
-  assert.deepEqual(modelOf("run-treadmill", "run-easy"), { sport: "run", terrain: "road", workout: "z2" });
+  assert.deepEqual(modelOf("run-trail", "run-ultra"), { sport: "trail-run", terrain: "trail", indoor: false, workout: "ultra" });
+  assert.deepEqual(modelOf("bike-gravel", "bike-race"), { sport: "ride", terrain: "trail", indoor: false, workout: "race" });
+  assert.deepEqual(modelOf("run-treadmill", "run-easy"), { sport: "run", terrain: "road", indoor: true, workout: "z2" });
+  assert.equal(modelOf("bike-indoor", "bike-intervals").workout, "tempo");
   const input = toPlanInput(parseSession({ discipline: "bike-mtb", effort: "bike-z2" }), []);
   assert.equal(input.sport, "ride");
   assert.equal(input.terrain, "trail");
