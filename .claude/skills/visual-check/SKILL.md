@@ -12,15 +12,22 @@ dependency is needed.
 ## 1. Build and serve
 
 ```sh
-npm run build && mkdir -p .playwright-mcp
-fuser 4173/tcp && echo "port 4173 is taken: pick another port"   # must print nothing
-node_modules/.bin/vite preview --config vite.config.ts --port 4173 --strictPort > .playwright-mcp/preview.log 2>&1 &
-echo $! > .playwright-mcp/preview.pid
-curl -s --retry 10 --retry-connrefused --retry-delay 1 http://localhost:4173/ | grep -c 'Content-Security-Policy'   # expect 1
+PORT=4173
+npm run build && mkdir -p .playwright-mcp && rm -f .playwright-mcp/preview.pid
+node_modules/.bin/vite preview --config vite.config.ts --port "$PORT" --strictPort > .playwright-mcp/preview.log 2>&1 &
+PID=$!
+for i in $(seq 30); do grep -qE 'Local:|in use' .playwright-mcp/preview.log && break; sleep 0.5; done
+if grep -q 'Local:' .playwright-mcp/preview.log && kill -0 "$PID" 2>/dev/null; then
+  echo "$PID" > .playwright-mcp/preview.pid
+  curl -s "http://localhost:$PORT/" | grep -cE 'Content-Security-Policy|<title>Bento'   # expect 2: the CSP meta and Bento's title
+else
+  echo "preview did not start (port $PORT taken?):"; cat .playwright-mcp/preview.log
+fi
 ```
 
-Run it in one shell call (or with the Bash tool's background mode, noting the PID). The grep confirms
-the page is Bento's built page, not another server. If 4173 is taken, use another port below.
+Run it in one shell call. `--strictPort` makes Vite exit rather than move to another port, so a
+busy port shows up as "did not start": pick another `PORT` and use it below. The PID file is
+written only for a server that started.
 
 ## 2. Screenshot four views
 
@@ -29,7 +36,7 @@ phone `390x844` and desktop `1280x800`, and each scheme `light` and `dark`:
 
 1. `browser_resize` to the width and height.
 2. `browser_emulate_media` with `colorScheme`. The theme toggle defaults to Auto, which follows it.
-3. `browser_navigate` to `http://localhost:4173/` (navigate again after changing state).
+3. `browser_navigate` to `http://localhost:$PORT/` (default 4173; navigate again after changing state).
 4. `browser_take_screenshot` with `fullPage: true`, `scale: "css"`,
    `filename: ".playwright-mcp/<phone|desktop>-<light|dark>.png"`.
 
@@ -51,5 +58,5 @@ not-medical-advice footer is still there.
 
 - Describe what each screenshot shows in the PR (or attach them in a PR comment). Do not commit them.
 - Close the browser (`browser_close`) and stop the preview server by its PID:
-  `kill "$(cat .playwright-mcp/preview.pid)"`. Not `fuser -k`, which can hit another server on the
-  port, and not `pkill -f` on its command line, which can match your own shell.
+  `kill "$(cat .playwright-mcp/preview.pid)" && rm .playwright-mcp/preview.pid`. Do not kill by port,
+  which can hit another server, or with `pkill -f` on its command line, which can match your own shell.
