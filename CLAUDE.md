@@ -46,8 +46,9 @@ site/                  Vite root (index.html, favicon.svg, apple-touch-icon.png)
     factors.ts         the rules: carb curves, fluid, sodium, caffeine, notes (cites the evidence review)
     plan.ts            builds the intake timeline and packing list from targets and packs
     options.ts         which "More options" fields can change the plan, so the form shows only those
-    products.ts        preset fuel packs; storage.ts parses localStorage defensively; theme.ts
-tests/                 node --test, one file per lib module, plus scenarios, csp, ci and requirements
+    products.ts        preset fuel packs; storage.ts parses localStorage defensively
+    types.ts, format.ts, theme.ts   shared types, display formatting, light/dark pin
+tests/                 node --test: a file per tested lib module, plus scenarios, csp, ci and requirements
 docs/                  methodology.md (every rule value), evidence-review-2026-11.md, research-prompt.md
 tools/build.ts         runs the Vite build
 ```
@@ -72,9 +73,10 @@ tools/build.ts         runs the Vite build
   package or config files) call `skathio/hashira`'s `static-webapp-ci.yml`: build, `npm test` with
   coverage, scan suite. `deploy.yml` then publishes `dist/` with hashira's `pages-deploy`. There is no
   release or tag step: merging to `main` deploys.
-- The hashira SHA appears three times (two `uses:` and `library_ref` in each file) and must be the same
-  everywhere; `tests/ci.test.ts` fails otherwise. Dependabot bumps `uses:` but not `library_ref`, so fix
-  that by hand in its PR.
+- The hashira SHA appears five times and must be the same everywhere: three `uses:` pins
+  (`static-webapp-ci.yml` in both files, `pages-deploy` in `deploy.yml`) and `library_ref` in each file.
+  `tests/ci.test.ts` fails otherwise. Dependabot bumps `uses:` but not `library_ref`, so fix that by hand
+  in its PR.
 - `homepage.yml` pings the skathio homepage when `.github/homepage.json` or `site/favicon.svg` changes on
   `main`.
 

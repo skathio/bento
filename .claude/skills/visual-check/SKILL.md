@@ -12,12 +12,15 @@ dependency is needed.
 ## 1. Build and serve
 
 ```sh
-npm run build
-npx vite preview --config vite.config.ts --port 4173 --strictPort   # run in the background
-curl -s --retry 10 --retry-connrefused --retry-delay 1 -o /dev/null -w '%{http_code}\n' http://localhost:4173/   # expect 200
+npm run build && mkdir -p .playwright-mcp
+fuser 4173/tcp && echo "port 4173 is taken: pick another port"   # must print nothing
+node_modules/.bin/vite preview --config vite.config.ts --port 4173 --strictPort > .playwright-mcp/preview.log 2>&1 &
+echo $! > .playwright-mcp/preview.pid
+curl -s --retry 10 --retry-connrefused --retry-delay 1 http://localhost:4173/ | grep -c 'Content-Security-Policy'   # expect 1
 ```
 
-If port 4173 is taken, pick another and use it below.
+Run it in one shell call (or with the Bash tool's background mode, noting the PID). The grep confirms
+the page is Bento's built page, not another server. If 4173 is taken, use another port below.
 
 ## 2. Screenshot four views
 
@@ -47,5 +50,6 @@ not-medical-advice footer is still there.
 ## 4. Report and clean up
 
 - Describe what each screenshot shows in the PR (or attach them in a PR comment). Do not commit them.
-- Close the browser (`browser_close`) and stop the preview server. Kill it by PID or port
-  (`fuser -k 4173/tcp`), not with `pkill -f` on its command line, which can match your own shell.
+- Close the browser (`browser_close`) and stop the preview server by its PID:
+  `kill "$(cat .playwright-mcp/preview.pid)"`. Not `fuser -k`, which can hit another server on the
+  port, and not `pkill -f` on its command line, which can match your own shell.
