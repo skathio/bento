@@ -23,6 +23,13 @@ on:
 
 permissions: {}
 
+# Runs on main (push or manual) share the `pages` group, so one whole build and deploy finishes
+# before the next starts and an older commit never deploys over a newer one. Pull requests get a
+# group each, so they do not wait on deploys or on each other's branches.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('ci-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: false
+
 jobs:
   ci:
     # hashira v3.0.0 (the peeled tag commit); every hashira pin here must match.
@@ -43,10 +50,6 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: github-pages
-    # One Pages deploy at a time; a queued deploy waits instead of cancelling one in flight.
-    concurrency:
-      group: pages
-      cancel-in-progress: false
     permissions:
       contents: read
       pages: write # deploy-pages publishes the site
