@@ -43,11 +43,11 @@ site/                 React + TypeScript + Tailwind app (Vite root)
 tools/build.ts        Vite build into dist/
 tests/                node --test unit tests
 docs/                 Methodology and the research prompt
-.github/workflows/    hashira static-webapp CI (pr.yml) and Pages deploy (deploy.yml)
+.github/workflows/    hashira static-webapp CI and Pages deploy (ci.yml)
 ```
 
 ## Deploy
 
-`deploy.yml` runs the hashira static-webapp CI (build, tests with coverage, scan suite) and deploys
-`dist/` to GitHub Pages on every push to `main`. In the repo settings, set Pages to deploy from **GitHub
-Actions**. The site uses a relative base, so it works under `/bento/`.
+`ci.yml` runs the hashira static-webapp CI (build, tests with coverage, scan suite, quality gate) on every
+pull request, and also deploys `dist/` to GitHub Pages on every push to `main` that touches the site. In
+the repo settings, set Pages to deploy from **GitHub Actions**. The site uses a relative base, so it works under `/bento/`.

@@ -69,14 +69,14 @@ tools/build.ts         runs the Vite build
 
 ## CI/CD
 
-- `.github/workflows/pr.yml` (every PR) and `deploy.yml` (push to `main` touching site, tools, tests,
-  package or config files) call `skathio/hashira`'s `static-webapp-ci.yml`: build, `npm test` with
-  coverage, scan suite. `deploy.yml` then publishes `dist/` with hashira's `pages-deploy`. There is no
-  release or tag step: merging to `main` deploys.
-- The hashira SHA appears five times and must be the same everywhere: three `uses:` pins
-  (`static-webapp-ci.yml` in both files, `pages-deploy` in `deploy.yml`) and `library_ref` in each file.
-  `tests/ci.test.ts` fails otherwise. Dependabot bumps `uses:` but not `library_ref`, so fix that by hand
-  in its PR.
+- `.github/workflows/ci.yml` calls `skathio/hashira`'s `static-webapp-ci.yml` (v3): build, `npm test` with
+  coverage, scan suite and SoMi's quality gate (on by default at `strict`; it scores only what a PR
+  changes). It runs on every PR, on push to `main` touching site, tools, tests, package or config files,
+  and by hand. Its `deploy` job, skipped on PRs and off `main`, then publishes `dist/` with hashira's
+  `pages-deploy`. There is no release or tag step: merging to `main` deploys.
+- hashira is pinned to the 40-character SHA of a release tag's commit, twice in `ci.yml` (the
+  `static-webapp-ci.yml` and `pages-deploy` `uses:` lines), and both must match: `tests/ci.test.ts`
+  fails otherwise. v3 has no `library_ref` input, so a Dependabot bump of both pins needs no hand fix.
 - `homepage.yml` pings the skathio homepage when `.github/homepage.json` or `site/favicon.svg` changes on
   `main`.
 
