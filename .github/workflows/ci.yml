@@ -32,8 +32,9 @@ concurrency:
 
 jobs:
   ci:
-    # hashira v3.1.0 (the peeled tag commit); every hashira pin here must match.
-    uses: skathio/hashira/.github/workflows/static-webapp-ci.yml@1bd415e21fb070c46f07e05bfaa70e42c0531342
+    # hashira's moving major tag: new v3.x releases apply with no PR. Every hashira ref here
+    # stays on the same tag (tests/ci.test.ts), and they move to @v4 together.
+    uses: skathio/hashira/.github/workflows/static-webapp-ci.yml@v3
     permissions:
       contents: read # check out the repository
       id-token: write # upload-pages-artifact authenticates to Pages
@@ -55,4 +56,4 @@ jobs:
       pages: write # deploy-pages publishes the site
       id-token: write # deploy-pages authenticates to Pages with OIDC
     steps:
-      - uses: skathio/hashira/.github/actions/pages-deploy@1bd415e21fb070c46f07e05bfaa70e42c0531342
+      - uses: skathio/hashira/.github/actions/pages-deploy@v3
