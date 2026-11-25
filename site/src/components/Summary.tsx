@@ -3,7 +3,7 @@ import { fmtBand, fmtClock, fmtDuration, fmtFluid, fmtGrams, fmtMg } from "../li
 import type { IntakeEvent, PackKind, PackLine, Plan } from "../lib/types.ts";
 import { targetValues } from "./ui.tsx";
 
-// The plan is the bento box: a black-lacquer panel whose compartments, split by thin ume lines
+// The plan is the bento box: an ume-washed panel whose compartments, split by thin ume lines
 // like the favicon's, hold the per-hour targets. It is the page's one bold element.
 
 const ON_LACQUER: Record<PackKind, string> = {

@@ -4,7 +4,7 @@ import type { PackKind, Targets } from "../lib/types.ts";
 
 /**
  * A titled section of the page. Sections sit flat on the page, set apart by space and a heading,
- * not boxed: the lacquer plan panel is the only box, so it reads as the result.
+ * not boxed: the plan panel is the only box, so it reads as the result.
  */
 export function Section({ title, aside, children, label }: { title: string; aside?: ReactNode; children: ReactNode; label?: string }) {
   return (

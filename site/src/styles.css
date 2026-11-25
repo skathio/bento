@@ -4,7 +4,7 @@
    Each token holds both palettes through light-dark(), which follows color-scheme:
    the OS by default, or the theme pinned by data-theme on <html>. Components never
    need dark: variants.
-   Bento's look: the plan is the bento box itself, a black-lacquer panel with ume-pink dividers
+   Bento's look: the plan is the bento box itself, an ume-washed panel with ume dividers
    like the favicon; everything around it is quiet stone and ink. Accent ume is for the brand and
    focus and every selected control.
    Contrast (WCAG 2.2 AA, checked by tests/typeface-tokens.test.ts): ink, muted, bad and the
@@ -25,25 +25,25 @@
   /* The selected state of a choice: solid ume, Bento's brand colour, flat (no gradient). */
   --color-select: light-dark(#9b1d52, #f47fae);
   --color-on-select: light-dark(#fff7fa, #2a0716);
-  /* The plan box takes the favicon's own colours: the plum-black of its disc, its ume ring
-     (#a3245f) and its glowing pink strokes (#ff85b8). The same in both themes. */
-  --color-box: light-dark(#2a0c1b, #2a0c1b);
-  --color-box-2: light-dark(#35102a, #35102a);
-  --color-box-line: light-dark(#7a1d47, #7a1d47);
-  --color-box-ring: light-dark(#a3245f, #a3245f);
-  --color-on-box: light-dark(#fbf3f7, #fbf3f7);
-  --color-on-box-muted: light-dark(#e2b8cb, #e2b8cb);
-  --color-ume: light-dark(#ff85b8, #ff85b8);
+  /* The plan box (and the phone's targets bar): a soft ume wash over the page, a pale pink in
+     light and a slight plum lift in dark, with ume labels, so the result stands out without a
+     dark block. */
+  --color-box: light-dark(#f8ecf1, #1e1419);
+  --color-box-line: light-dark(#e6c7d5, #3d2531);
+  --color-box-ring: light-dark(#d9a5bd, #5e2c43);
+  --color-on-box: light-dark(#17151a, #f3eef2);
+  --color-on-box-muted: light-dark(#5e4f57, #b8a9b1);
+  --color-ume: light-dark(#9b1d52, #ff85b8);
   --color-gel: light-dark(#8a4f00, #f0b44a);
   --color-gel-bg: light-dark(#fbefd6, #33260e);
   --color-solid: light-dark(#24603a, #84cc96);
   --color-solid-bg: light-dark(#e2f0e4, #15301f);
   --color-drink: light-dark(#24508f, #93b6ee);
   --color-drink-bg: light-dark(#e3ebf7, #16243a);
-  /* Pack kinds on the lacquer: bright enough on the dark box in both themes. */
-  --color-gel-on-box: light-dark(#f2b544, #f2b544);
-  --color-solid-on-box: light-dark(#8fd6a0, #8fd6a0);
-  --color-drink-on-box: light-dark(#9cbcf2, #9cbcf2);
+  /* Pack kinds inside the plan box: the page's own kind colours, which hold their contrast on the wash. */
+  --color-gel-on-box: light-dark(#8a4f00, #f0b44a);
+  --color-solid-on-box: light-dark(#24603a, #84cc96);
+  --color-drink-on-box: light-dark(#24508f, #93b6ee);
   --color-warn: light-dark(#7a4f00, #f1c25f);
   --color-warn-bg: light-dark(#fbf0d4, #33290e);
   --color-bad: light-dark(#a8241c, #ff8f86);

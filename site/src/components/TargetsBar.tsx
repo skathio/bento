@@ -2,7 +2,7 @@ import type { Plan } from "../lib/types.ts";
 import { targetValues } from "./ui.tsx";
 
 /**
- * The phone's sticky strip of per-hour targets, a slice of the lacquer plan panel, so they stay in
+ * The phone's sticky strip of per-hour targets, in the plan panel's ume wash, so they stay in
  * sight while the inputs below are edited. Hidden from lg up, where the plan panel itself sticks.
  * It is not a live region: the panel carries the same numbers, and announcing every keystroke
  * would be noise.

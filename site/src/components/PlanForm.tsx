@@ -129,15 +129,17 @@ const EFFORT_LABEL = Object.fromEntries(Object.entries(EFFORTS).map(([id, e]) =>
 const ICON: Record<Activity, ReactNode> = {
   bike: (
     <>
+      {/* A road bike: diamond frame (chainstay, seat and top tubes, down tube), fork, saddle, bars. */}
       <circle cx="5.5" cy="16.5" r="3.5" />
       <circle cx="18.5" cy="16.5" r="3.5" />
-      <path d="M5.5 16.5 9.5 9h6.5l2.5 7.5M9.5 9l3 7.5L16 9M8 6.5h3M15 6.5h2.5L16 9" />
+      <path d="M5.5 16.5H11L15.5 10H9L5.5 16.5M9 10l2 6.5M15.5 10l3 6.5M9 10V8M7.5 8h3M15.5 10l-.7-2.5H17" />
     </>
   ),
   run: (
     <>
-      <circle cx="14.5" cy="4.5" r="1.8" />
-      <path d="M7 21l3.5-5 2.5 2v4M10.5 16 12 9.5l-3 1.5-1.5 3M12 9.5l3 3 3.5-1M12 9.5l2.5-2.5" />
+      {/* A runner mid-stride: arms swinging, front leg landing, back leg pushing off. */}
+      <circle cx="14.5" cy="4.5" r="2" />
+      <path d="M8 11.5 10.5 9h3.5l2.5 3H19M14 9l-2 5 3 2.5V21M12 14l-2 3.5H6" />
     </>
   ),
 };

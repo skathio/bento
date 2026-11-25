@@ -40,7 +40,7 @@ deprecation warning on newer Node versions is harmless.
 ```
 site/                  Vite root (index.html, favicon.svg, apple-touch-icon.png)
   src/main.tsx, App.tsx    mounts the app, holds Settings state, saves to localStorage
-  src/components/      PlanForm, FuelPackEditor, Summary (the lacquer plan panel), Advice, Timeline,
+  src/components/      PlanForm, FuelPackEditor, Summary (the plan panel), Advice, Timeline,
                        TargetsBar (phone's sticky targets), ThemeToggle, ui (shared bits)
   src/lib/             pure logic
     activities.ts      Bike/Run disciplines and workouts -> sport, terrain, intensity
