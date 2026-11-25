@@ -3,28 +3,45 @@
 /* Design tokens. Tailwind v4 exposes these as utilities (bg-surface, text-muted, ...).
    Each token holds both palettes through light-dark(), which follows color-scheme:
    the OS by default, or the theme pinned by data-theme on <html>. Components never
-   need dark: variants. Bento's look: rice-paper cream, black lacquer, ume (the pickled plum in the rice).
+   need dark: variants.
+   Bento's look: the plan is the bento box itself, a black-lacquer panel with ume-pink dividers
+   like the favicon; everything around it is quiet stone and ink. Accent ume is for the brand and
+   focus only; a selected control is filled with ink.
    Contrast (WCAG 2.2 AA, checked by tests/typeface-tokens.test.ts): ink, muted, bad and the
    pack-kind colours reach 4.5:1 on their surfaces; accent and line reach 3:1, because they draw
    focus rings and control boundaries. hairline is for decorative dividers only, never a control edge. */
 @theme {
-  --color-bg: light-dark(#f6f1e8, #131012);
-  --color-surface: light-dark(#fffcf7, #1c181a);
-  --color-surface-2: light-dark(#efe8dc, #262124);
-  --color-ink: light-dark(#1c1917, #eee8e1);
-  --color-muted: light-dark(#5f564e, #ada299);
-  --color-line: light-dark(#8a7f73, #7a6f6a);
-  --color-hairline: light-dark(#e4dccd, #2e282a);
+  --color-bg: light-dark(#eceae5, #0f0e11);
+  --color-surface: light-dark(#fbfaf8, #18161b);
+  --color-surface-2: light-dark(#e2dfd8, #242128);
+  --color-ink: light-dark(#17151a, #eeebf1);
+  --color-muted: light-dark(#57525c, #aaa4b0);
+  --color-line: light-dark(#86808b, #77707e);
+  --color-hairline: light-dark(#d6d2ca, #2b2830);
   --color-accent: light-dark(#9b1d52, #f47fae);
   --color-accent-hi: light-dark(#b3305f, #ff9cc4);
   --color-accent-lo: light-dark(#7a1440, #e0679a);
   --color-on-accent: light-dark(#fff7fa, #2a0716);
+  /* The selected state of a choice: solid ink, so the accent stays the brand's. */
+  --color-select: light-dark(#17151a, #eeebf1);
+  --color-on-select: light-dark(#fbfaf8, #17151a);
+  /* The lacquer box: the same in both themes, a touch lifted from the page in dark. */
+  --color-box: light-dark(#1d0e16, #22101a);
+  --color-box-2: light-dark(#2a1520, #2e1623);
+  --color-box-line: light-dark(#5a2a40, #5e2c43);
+  --color-on-box: light-dark(#f8eff3, #f8eff3);
+  --color-on-box-muted: light-dark(#cdb3c0, #cdb3c0);
+  --color-ume: light-dark(#ff85b8, #ff85b8);
   --color-gel: light-dark(#8a4f00, #f0b44a);
   --color-gel-bg: light-dark(#fbefd6, #33260e);
   --color-solid: light-dark(#24603a, #84cc96);
   --color-solid-bg: light-dark(#e2f0e4, #15301f);
   --color-drink: light-dark(#24508f, #93b6ee);
   --color-drink-bg: light-dark(#e3ebf7, #16243a);
+  /* Pack kinds on the lacquer: bright enough on the dark box in both themes. */
+  --color-gel-on-box: light-dark(#f2b544, #f2b544);
+  --color-solid-on-box: light-dark(#8fd6a0, #8fd6a0);
+  --color-drink-on-box: light-dark(#9cbcf2, #9cbcf2);
   --color-warn: light-dark(#7a4f00, #f1c25f);
   --color-warn-bg: light-dark(#fbf0d4, #33290e);
   --color-bad: light-dark(#a8241c, #ff8f86);
@@ -34,7 +51,7 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* Bento's lacquer fill: an ume gradient for primary actions, per theme so text-on-accent stays readable. */
+/* Bento's lacquer fill: an ume gradient for the one primary action, per theme so text-on-accent stays readable. */
 @utility bg-lacquer {
   background-color: var(--color-accent);
   background-image: linear-gradient(135deg, var(--color-accent-hi) 0%, var(--color-accent) 55%, var(--color-accent-lo) 100%);

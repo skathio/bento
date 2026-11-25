@@ -148,10 +148,14 @@ const COMPARE: Record<string, (a: number, b: number) => boolean> = {
   ">=": (a, b) => a >= b, ">": (a, b) => a > b, "<=": (a, b) => a <= b, "<": (a, b) => a < b,
 };
 
-/** One width feature, min-width and max-width written as ranges first; any other feature is false. */
+/** The viewport height the layout is checked at: the phone's 844 px and the desktop's 800 px both clear every height query Bento uses. */
+const HEIGHT = 800;
+
+/** One width or height feature, min-/max- written as ranges first; any other feature is false. */
 function feature(f: string, width: number): boolean {
-  const range = /^width(>=|>|<=|<)([\d.]+)(px|r?em)$/.exec(f.replace(/^min-width:/, "width>=").replace(/^max-width:/, "width<="));
-  return range ? COMPARE[range[1]!]!(width, toPx(range[2]!, range[3]!)) : false;
+  const norm = f.replace(/^min-(width|height):/, "$1>=").replace(/^max-(width|height):/, "$1<=");
+  const range = /^(width|height)(>=|>|<=|<)([\d.]+)(px|r?em)$/.exec(norm);
+  return range ? COMPARE[range[2]!]!(range[1] === "height" ? HEIGHT : width, toPx(range[3]!, range[4]!)) : false;
 }
 
 function mediaMatches(query: string, width: number): boolean {
@@ -451,14 +455,17 @@ test("at 1280 px the inputs and the plan sit side by side", () => {
   assert.equal(sideBySide(layout, DESKTOP), true);
 });
 
-test("at 1280 px the plan column is sticky and stays in view while the inputs scroll", () => {
-  const { layout, plan, summary, timeline } = desktopColumns(render(FULL[0]));
-  const sticky = must(lineage(summary.parent).find((el) => contains(plan, el.index) && contains(el, timeline.index) && stickyAt(el, DESKTOP)), "a sticky plan column at 1280 px");
-  assert.ok(style(sticky, "top", DESKTOP) !== undefined, "the sticky plan column sets top");
-  if (sticky.parent === layout) {
-    const align = style(sticky, "align-self", DESKTOP) ?? style(layout, "align-items", DESKTOP) ?? "stretch";
-    assert.match(align, /start|end|center|baseline/, "a stretched grid item cannot stick");
-  }
+// The plan panel (targets, session strip, packing list) is what sticks: the timeline and notes flow
+// with the page, so a long plan never hides inside a scrolling box or under the footer.
+test("at 1280 px the plan panel is sticky and stays in view while the inputs scroll", () => {
+  const { plan, summary, timeline } = desktopColumns(render(FULL[0]));
+  const page = render(FULL[0]);
+  const packing = must(textAfter(page, page.plan.packing[0]!.name, packSection(page).last), "the packing list");
+  const sticky = must(lineage(summary.parent).find((el) => contains(plan, el.index) && contains(el, packing.index) && stickyAt(el, DESKTOP)), "a sticky plan panel at 1280 px");
+  assert.ok(style(sticky, "top", DESKTOP) !== undefined, "the sticky plan panel sets top");
+  assert.equal(contains(sticky, timeline.index), false, "the timeline flows with the page, below the panel");
+  const scrollers = elements(plan).filter((el) => OVERFLOW.some((prop) => /auto|scroll/.test(style(el, prop, DESKTOP) ?? "")));
+  assert.deepEqual(scrollers.map((el) => `<${el.tag} class="${classes(el).join(" ")}">`), [], "nothing in the plan column scrolls in its own box");
 });
 
 test("at 1280 px no sticky phone bar is shown", () => {

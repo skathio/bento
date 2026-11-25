@@ -1,17 +1,18 @@
 import type { ReactNode } from "react";
 import { fmtFluid } from "../lib/format.ts";
-import type { Targets } from "../lib/types.ts";
+import { KIND_LABEL } from "../lib/products.ts";
+import type { PackKind, Targets } from "../lib/types.ts";
 
 /**
- * A titled section of the page. Only a raised one is a card (the plan summary, the page's result);
- * the rest sit flat on the page, set apart by a rule, so the sections do not all look the same.
+ * A titled section of the page. Sections sit flat on the page, set apart by space and a heading,
+ * not boxed: the lacquer plan panel is the only box, so it reads as the result.
  */
-export function Card({ title, aside, raised = false, children }: { title: string; aside?: ReactNode; raised?: boolean; children: ReactNode }) {
+export function Section({ title, aside, children, label }: { title: string; aside?: ReactNode; children: ReactNode; label?: string }) {
   return (
-    <section className={raised ? "rounded-2xl border border-hairline bg-surface p-4 shadow-sm" : "border-t border-hairline pt-4 first:border-t-0 first:pt-0"}>
+    <section aria-label={label}>
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="text-base font-semibold">{title}</h2>
-        {aside}
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        {aside && <span className="text-sm text-muted">{aside}</span>}
       </div>
       {children}
     </section>
@@ -24,14 +25,16 @@ interface SegmentedProps<T extends string> {
   options: readonly T[];
   labels: Record<T, string>;
   onChange: (v: T) => void;
+  /** Show the group's label above it; off when a heading nearby already names it. */
+  showLabel?: boolean;
 }
 
-/** A row of mutually exclusive buttons, announced as a radio group. */
-export function Segmented<T extends string>({ label, value, options, labels, onChange }: SegmentedProps<T>) {
+/** A row of mutually exclusive buttons, announced as a radio group. The chosen one is filled with ink. */
+export function Segmented<T extends string>({ label, value, options, labels, onChange, showLabel = true }: SegmentedProps<T>) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-muted">{label}</span>
-      <div className="flex flex-wrap rounded-xl bg-surface-2 p-1">
+    <div role="radiogroup" aria-label={label} className="flex flex-col gap-1.5">
+      {showLabel && <span className="text-sm font-medium text-muted">{label}</span>}
+      <div className="flex flex-wrap gap-1 rounded-xl bg-surface-2 p-1">
         {options.map((o) => (
           <button
             key={o}
@@ -39,7 +42,7 @@ export function Segmented<T extends string>({ label, value, options, labels, onC
             role="radio"
             aria-checked={o === value}
             onClick={() => onChange(o)}
-            className={`flex-auto min-h-11 rounded-lg px-2 py-1.5 text-sm whitespace-nowrap transition-colors ${o === value ? "bg-accent font-semibold text-on-accent shadow-sm" : "text-ink hover:bg-surface"}`}
+            className={`min-h-11 flex-auto rounded-lg px-3 text-[0.9375rem] whitespace-nowrap transition-colors ${o === value ? "bg-select font-semibold text-on-select" : "text-ink hover:bg-surface"}`}
           >
             {labels[o]}
           </button>
@@ -49,17 +52,25 @@ export function Segmented<T extends string>({ label, value, options, labels, onC
   );
 }
 
-const KIND_CLASS = {
-  gel: "bg-gel-bg text-gel",
-  solid: "bg-solid-bg text-solid",
-  drink: "bg-drink-bg text-drink",
-} as const;
+const DOT_CLASS: Record<PackKind, string> = { gel: "bg-gel", solid: "bg-solid", drink: "bg-drink" };
+const TEXT_CLASS: Record<PackKind, string> = { gel: "text-gel", solid: "text-solid", drink: "text-drink" };
 
-export function KindBadge({ kind }: { kind: keyof typeof KIND_CLASS }) {
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${KIND_CLASS[kind]}`}>{kind}</span>;
+/** A pack kind's colour as a small dot; decorative, a text label always sits beside it. */
+export function KindDot({ kind, className = "" }: { kind: PackKind; className?: string }) {
+  return <span className={`size-2 shrink-0 rounded-full ${DOT_CLASS[kind]} ${className}`} aria-hidden="true" />;
 }
 
-/** The per-hour targets as shown in the summary tiles and the phone's targets bar. */
+/** A pack's kind as a coloured dot and its name, quiet enough to sit on every row. */
+export function KindBadge({ kind }: { kind: PackKind }) {
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1.5 text-xs font-medium ${TEXT_CLASS[kind]}`}>
+      <span className={`size-2 rounded-full ${DOT_CLASS[kind]}`} aria-hidden="true" />
+      {KIND_LABEL[kind]}
+    </span>
+  );
+}
+
+/** The per-hour targets as shown in the plan panel and the phone's targets bar. */
 export function targetValues(t: Targets): { carbs: string; fluid: string; sodium: string } {
   return {
     carbs: t.carbsPerHour > 0 ? `${t.carbsPerHour} g/h` : "None",

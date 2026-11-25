@@ -8,13 +8,13 @@ import { fmtPace, parsePace } from "../lib/format.ts";
 import { ftpWatts } from "../lib/factors.ts";
 import { ALTITUDE_FROM_M, type Relevant } from "../lib/options.ts";
 import { AIRFLOWS, GUT_LEVELS } from "../lib/types.ts";
-import { Card, Segmented } from "./ui.tsx";
+import { Section, Segmented } from "./ui.tsx";
 
 type NumberKey = keyof typeof RANGES;
 
 // The box around an input and its unit. The input's own outline is off, so the box shows keyboard
 // focus instead, with the same 2 px accent outline every other control gets.
-const FIELD_BOX = "flex min-h-11 items-center gap-2 rounded-xl border bg-surface px-3 py-1.5 focus-within:border-accent focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent";
+const FIELD_BOX = "flex min-h-12 items-center gap-2 rounded-xl border bg-surface px-3.5 focus-within:border-accent focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent";
 
 interface FieldProps {
   field: NumberKey;
@@ -42,7 +42,7 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted">{label}</span>
+        <span className="text-sm font-medium text-muted">{label}</span>
         <span className={`${FIELD_BOX} border-line`}>
           <input
             aria-describedby={hint ? hintId : undefined}
@@ -55,9 +55,9 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
             onChange={(e) => type(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
-            className="tabular w-full min-w-0 bg-transparent outline-none"
+            className="tabular w-full min-w-0 bg-transparent text-lg font-medium outline-none"
           />
-          <span className="text-xs text-muted">{unit}</span>
+          <span className="text-sm text-muted">{unit}</span>
         </span>
       </label>
       {hint && <span id={hintId} className="text-xs text-muted">{hint}</span>}
@@ -90,7 +90,7 @@ function PaceField({ field, label, hint, session, onChange }: PaceProps) {
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted">{label}</span>
+        <span className="text-sm font-medium text-muted">{label}</span>
         <span className={`${FIELD_BOX} ${bad ? "border-bad" : "border-line"}`}>
           <input
             inputMode="decimal"
@@ -101,9 +101,9 @@ function PaceField({ field, label, hint, session, onChange }: PaceProps) {
             onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
             aria-invalid={bad}
             aria-describedby={hintId}
-            className="tabular w-full min-w-0 bg-transparent outline-none"
+            className="tabular w-full min-w-0 bg-transparent text-lg font-medium outline-none"
           />
-          <span className="text-xs text-muted">/km</span>
+          <span className="text-sm text-muted">/km</span>
         </span>
       </label>
       <span id={hintId} className={`text-xs ${bad ? "text-bad" : "text-muted"}`}>{bad ? "Type a pace like 5:30" : hint}</span>
@@ -113,8 +113,8 @@ function PaceField({ field, label, hint, session, onChange }: PaceProps) {
 
 function Check({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
   return (
-    <label className="flex min-h-11 items-center gap-3 text-sm">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-5 shrink-0 accent-accent" />
+    <label className="flex min-h-11 items-center gap-3 text-[0.9375rem]">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-5 shrink-0 accent-select" />
       <span>{children}</span>
     </label>
   );
@@ -153,7 +153,7 @@ function ActivityPicker({ value, onChange }: { value: Activity; onChange: (a: Ac
           role="radio"
           aria-checked={a === value}
           onClick={() => onChange(a)}
-          className={`flex items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3 text-base font-semibold transition-colors ${a === value ? "border-accent bg-accent text-on-accent" : "border-line bg-surface hover:border-accent"}`}
+          className={`flex min-h-14 items-center justify-center gap-2.5 rounded-xl border px-3 text-base font-semibold transition-colors ${a === value ? "border-select bg-select text-on-select" : "border-line bg-surface hover:border-ink"}`}
         >
           <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {ICON[a]}
@@ -174,8 +174,8 @@ function ftpHint(s: Session): string {
 function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="mb-1 text-sm font-semibold">{title}</legend>
-      {note && <p className="-mt-2 text-xs text-muted">{note}</p>}
+      <legend className="mb-1 text-[0.9375rem] font-semibold">{title}</legend>
+      {note && <p className="-mt-2 text-sm text-muted">{note}</p>}
       {children}
     </fieldset>
   );
@@ -192,21 +192,27 @@ export default function PlanForm({ session, relevant, onChange }: FormProps) {
   const activity = DISCIPLINES[session.discipline].activity;
   const pickDiscipline = (discipline: DisciplineId) => onChange({ discipline, effort: keepEffort(session.effort, discipline) });
   return (
-    <Card title="Session">
-      <div className="flex flex-col gap-3">
+    <Section title="Session">
+      <div className="flex flex-col gap-4">
         <ActivityPicker value={activity} onChange={(a) => a !== activity && pickDiscipline(DEFAULT_DISCIPLINE[a])} />
         <Segmented label={`${ACTIVITY_LABEL[activity]} type`} value={session.discipline} options={disciplinesOf(activity)} labels={DISCIPLINE_LABEL} onChange={pickDiscipline} />
         <div className="flex flex-col gap-1">
           <Segmented label="Workout" value={session.effort} options={effortsFor(session.discipline)} labels={EFFORT_LABEL} onChange={(effort) => onChange({ effort })} />
-          <span className="text-xs text-muted">{EFFORTS[session.effort].hint}</span>
+          <span className="text-sm text-muted">{EFFORTS[session.effort].hint}</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <NumberField field="durationMin" label="Duration" unit="min" {...field} />
           <NumberField field="tempC" label="Temperature" unit="°C" {...field} />
         </div>
-        <details className="rounded-xl border border-line px-3">
-          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">More options</summary>
-          <div className="flex flex-col gap-4 pb-3">
+        <details className="group rounded-xl border border-line bg-surface px-3.5">
+          <summary className="flex min-h-12 cursor-pointer items-center gap-3">
+            <span className="flex-1">
+              <span className="block text-[0.9375rem] font-medium">More options</span>
+              <span className="block text-sm text-muted" aria-hidden="true">Pace or power, gut training, sweat and refills</span>
+            </span>
+            <svg viewBox="0 0 24 24" className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+          </summary>
+          <div className="flex flex-col gap-5 border-t border-hairline pt-4 pb-4">
             {relevant.paceOrPower && (
               <Group
                 title="Effort"
@@ -257,6 +263,6 @@ export default function PlanForm({ session, relevant, onChange }: FormProps) {
           </div>
         </details>
       </div>
-    </Card>
+    </Section>
   );
 }

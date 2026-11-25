@@ -1,5 +1,5 @@
-// The compact pack selector: one list where each pack is a single row whose label is the whole row,
-// so a tap anywhere on the pack toggles it, with its facts as separate items and no per-kind headings.
+// The compact pack selector: a list per kind under a plain heading, where each pack is a tile whose
+// label is the whole tile, so a tap anywhere on the pack toggles it, with its facts as separate items.
 // FuelPackEditor is rendered through Vite's SSR loader, so no browser or test dependency is needed.
 import { strict as assert } from "node:assert";
 import { before, test } from "node:test";
@@ -55,14 +55,14 @@ test("each pack is one row whose label holds its toggle, name and facts", () => 
 test("Remove sits beside the row's label, not inside it, so removing never toggles", () => {
   const row = rows(render()).find((r) => r.includes(`Carry ${MINE.name}`));
   assert.ok(row);
-  assert.ok(row.includes(">Remove</button>"));
+  assert.ok(/>Remove<\/span><\/button>/.test(row), "a Remove button named Remove");
   assert.ok(!labelOf(row).includes("<button"), "no button inside the label");
 });
 
-test("the list has no per-kind headings, no uppercase labels and no middle-dot separators", () => {
+test("one list per kind under a sentence-case heading, no uppercase labels and no middle-dot separators", () => {
   const list = listOf(render());
-  assert.equal((list.match(/<ul/g) ?? []).length, 1, "one list for every pack");
-  assert.ok(!/<h3/.test(list), "no per-kind headings");
+  assert.equal((list.match(/<ul/g) ?? []).length, 3, "a list each for gels, solids and drinks");
+  assert.deepEqual([...list.matchAll(/<h3[^>]*>[\s\S]*?<\/h3>/g)].map((m) => m[0].replace(/<[^>]+>/g, "").trim()), ["Gels", "Solids", "Drinks"]);
   assert.ok(!/\buppercase\b/.test(list), "no uppercase labels");
   assert.ok(!list.includes("·"), "no middle dots between facts");
 });

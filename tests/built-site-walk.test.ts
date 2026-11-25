@@ -77,15 +77,3 @@ test("the built CSS gives that outline a 2 px width, a style and the accent colo
   assert.match(rule("outline-offset-2"), /outline-offset:\s*2px/);
   assert.match(rule("outline-accent"), /outline-color:\s*var\(--color-accent\)/);
 });
-
-test("the timeline's dots stay inside the list's own box, so the scrolling plan column does not clip them", () => {
-  const page = render({ durationMin: 300 }, DEFAULT_SETTINGS.selected);
-  const list = /<ol class="([^"]*)">\s*<li\b/.exec(page)?.[1]?.split(/\s+/) ?? [];
-  const dot = /<span class="([^"]*\brounded-full\b[^"]*)" aria-hidden="true">/.exec(page)?.[1]?.split(/\s+/) ?? [];
-  /** The px a spacing class such as pl-4 or border-l-2 stands for; 0 when the element has none. */
-  const size = (cls: string[], prefix: string, unit: number) => Number(cls.find((c) => c.startsWith(prefix))?.slice(prefix.length) ?? 0) * unit;
-  const pull = Number(/^-left-\[([\d.]+)rem\]$/.exec(dot.find((c) => c.startsWith("-left-")) ?? "")?.[1]) * 16;
-  assert.ok(pull > 0, `the dot is pulled left over the rule: ${dot.join(" ")}`);
-  const overhang = pull - size(list, "pl-", 4) - size(list, "border-l-", 1);
-  assert.ok(size(list, "ml-", 4) >= overhang, `the list's left margin (${size(list, "ml-", 4)} px) covers the dot's overhang (${overhang.toFixed(1)} px)`);
-});
