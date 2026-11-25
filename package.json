@@ -14,13 +14,13 @@
     "test": "npm run typecheck && mkdir -p coverage && node --test --experimental-test-coverage --test-coverage-include='site/src/lib/**' --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info 'tests/**/*.test.ts'"
   },
   "dependencies": {
-    "react": "18.3.1",
+    "react": "19.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.5",
     "@types/node": "26.6.6",
-    "@types/react": "18.3.31",
+    "@types/react": "19.3.0",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "4.5.0",
     "tailwindcss": "4.3.5",
