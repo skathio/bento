@@ -97,15 +97,24 @@ function caffeineSub(capMg: number, durationMin: number): string {
   return durationMin <= 90 ? "at the start" : "half early, rest from 30%";
 }
 
-function Panel({ durationMin, children }: { durationMin: number; children: ReactNode }) {
+// From lg up only the head of the box sticks: the title, the compartments and the session strip,
+// which keep one height whatever is carried. The packing list continues the same box below and
+// scrolls with the page, so the sticky part never grows to cover the timeline and notes after it.
+// Head and body are siblings in the plan column (not wrapped), so the head sticks over the whole
+// column; a strip of page colour above it hides text scrolling past the gap.
+const STICKY_HEAD = "lg:[@media(min-height:36rem)]:sticky lg:[@media(min-height:36rem)]:top-0 lg:[@media(min-height:36rem)]:z-10 lg:-mt-4 lg:bg-bg lg:pt-4";
+
+function Head({ durationMin, joined = false, children }: { durationMin: number; joined?: boolean; children: ReactNode }) {
   return (
-    <section aria-label="Your bento" className="overflow-hidden rounded-2xl bg-box text-on-box ring-1 ring-box-line">
-      <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-3">
-        <h2 className="text-lg font-semibold tracking-tight">Your bento</h2>
-        <span className="tabular text-sm text-on-box-muted">{fmtDuration(durationMin)}</span>
+    <div className={STICKY_HEAD}>
+      <div className={`bg-box text-on-box ring-1 ring-box-line ${joined ? "rounded-t-2xl" : "rounded-2xl"}`}>
+        <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-3">
+          <h2 className="text-lg font-semibold tracking-tight">Your bento</h2>
+          <span className="tabular text-sm text-on-box-muted">{fmtDuration(durationMin)}</span>
+        </div>
+        {children}
       </div>
-      {children}
-    </section>
+    </div>
   );
 }
 
@@ -114,29 +123,31 @@ export default function Summary({ plan, durationMin }: { plan: Plan; durationMin
   const value = targetValues(t);
   if (blocked) {
     return (
-      <Panel durationMin={durationMin}>
-        <div role="alert" className="border-t border-box-line px-4 py-4">
-          <p className="text-[1.75rem] leading-tight font-semibold text-ume">Too hot to plan safely</p>
-          <p className="mt-2 text-on-box">{blocked}</p>
-        </div>
-      </Panel>
+      <section aria-label="Your bento">
+        <Head durationMin={durationMin}>
+          <div role="alert" className="border-t border-box-line px-4 py-4">
+            <p className="text-[1.75rem] leading-tight font-semibold text-ume">Too hot to plan safely</p>
+            <p className="mt-2 text-on-box">{blocked}</p>
+          </div>
+        </Head>
+      </section>
     );
   }
   return (
-    <Panel durationMin={durationMin}>
-      {/* The compartments: a 1 px gap over the divider colour draws the bento's dividers. */}
-      <div className="grid grid-cols-2 gap-px border-y border-box-line bg-box-line sm:grid-cols-4">
-        <Compartment label="Carbs" value={value.carbs} sub={t.carbsPerHour === 0 ? "not needed" : t.ratio ? `${fmtBand(t.carbBand, "g/h")}, glucose:fructose ${t.ratio}` : fmtBand(t.carbBand, "g/h")} />
-        <Compartment label="Fluid" value={value.fluid} sub={t.fluidPlanned ? `planned, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h` : `a guide, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h`} />
-        <Compartment label="Sodium" value={value.sodium} sub={t.sodiumNeeded ? "half of sweat losses" : "to taste, up to 500 mg/h"} />
-        <Compartment label="Caffeine" value={t.caffeineCapMg > 0 ? `≤ ${t.caffeineCapMg} mg` : "None"} sub={caffeineSub(t.caffeineCapMg, durationMin)} />
-      </div>
-
-      <div className="pt-4">
-        <SessionStrip events={events} durationMin={durationMin} />
-      </div>
-
-      <div className="border-t border-box-line px-4 pt-3 pb-4">
+    <section aria-label="Your bento" className="contents">
+      <Head durationMin={durationMin} joined>
+        {/* The compartments: a 1 px gap over the divider colour draws the bento's dividers. */}
+        <div className="grid grid-cols-2 gap-px border-y border-box-line bg-box-line sm:grid-cols-4">
+          <Compartment label="Carbs" value={value.carbs} sub={t.carbsPerHour === 0 ? "not needed" : t.ratio ? `${fmtBand(t.carbBand, "g/h")}, glucose:fructose ${t.ratio}` : fmtBand(t.carbBand, "g/h")} />
+          <Compartment label="Fluid" value={value.fluid} sub={t.fluidPlanned ? `planned, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h` : `a guide, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h`} />
+          <Compartment label="Sodium" value={value.sodium} sub={t.sodiumNeeded ? "half of sweat losses" : "to taste, up to 500 mg/h"} />
+          <Compartment label="Caffeine" value={t.caffeineCapMg > 0 ? `≤ ${t.caffeineCapMg} mg` : "None"} sub={caffeineSub(t.caffeineCapMg, durationMin)} />
+        </div>
+        <div className="pt-4">
+          <SessionStrip events={events} durationMin={durationMin} />
+        </div>
+      </Head>
+      <div className="-mt-px rounded-b-2xl border-t border-box-line bg-box px-4 pt-3 pb-4 text-on-box ring-1 ring-box-line">
         {stretches ? (
           <>
             <h3 className="font-semibold">Carry per stretch</h3>
@@ -160,6 +171,6 @@ export default function Summary({ plan, durationMin }: { plan: Plan; durationMin
           <span>packs take {fmtFluid(totals.carryVolumeMl)}</span>
         </p>
       </div>
-    </Panel>
+    </section>
   );
 }

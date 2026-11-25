@@ -1,12 +1,9 @@
-// Two things a walk through the built site with the keyboard and a long plan showed.
+// What a keyboard walk through the built site showed.
 //
 // A number or pace field turns its input's own outline off, because the box around the input and
 // its unit is what the eye reads as the field. That box must then show keyboard focus as strongly
 // as every other control does: a 2 px accent outline, not only a 1 px change of border colour.
-//
-// From lg up a long timeline scrolls inside the sticky plan column, which clips whatever leaves
-// it. Each timeline dot hangs over the rule to its left, so the list keeps a left margin at least
-// as wide as that overhang and no dot is cut in half.
+
 import { strict as assert } from "node:assert";
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

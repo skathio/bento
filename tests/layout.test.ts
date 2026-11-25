@@ -455,17 +455,26 @@ test("at 1280 px the inputs and the plan sit side by side", () => {
   assert.equal(sideBySide(layout, DESKTOP), true);
 });
 
-// The plan panel (targets, session strip, packing list) is what sticks: the timeline and notes flow
-// with the page, so a long plan never hides inside a scrolling box or under the footer.
-test("at 1280 px the plan panel is sticky and stays in view while the inputs scroll", () => {
-  const { plan, summary, timeline } = desktopColumns(render(FULL[0]));
-  const page = render(FULL[0]);
-  const packing = must(textAfter(page, page.plan.packing[0]!.name, packSection(page).last), "the packing list");
-  const sticky = must(lineage(summary.parent).find((el) => contains(plan, el.index) && contains(el, packing.index) && stickyAt(el, DESKTOP)), "a sticky plan panel at 1280 px");
-  assert.ok(style(sticky, "top", DESKTOP) !== undefined, "the sticky plan panel sets top");
-  assert.equal(contains(sticky, timeline.index), false, "the timeline flows with the page, below the panel");
-  const scrollers = elements(plan).filter((el) => OVERFLOW.some((prop) => /auto|scroll/.test(style(el, prop, DESKTOP) ?? "")));
-  assert.deepEqual(scrollers.map((el) => `<${el.tag} class="${classes(el).join(" ")}">`), [], "nothing in the plan column scrolls in its own box");
+// Only the head of the plan panel (targets and session strip) sticks: its height does not depend on
+// what is carried. The packing list, notes and timeline flow with the page, so the sticky part can
+// never grow to cover them, and nothing scrolls inside a box.
+test("at 1280 px the head of the plan panel is sticky and stays in view while the inputs scroll", () => {
+  for (const page of [render(FULL[0]), render({ durationMin: 300, refillEveryMin: 60 }, PRESETS.map((p) => p.id))]) {
+    const { plan, summary, timeline } = desktopColumns(page);
+    // The exact text node of the first packing line, not the start of a run of nodes around it.
+    const packing = must(page.flat.find((t) => t.index > packSection(page).last && t.text.includes(page.plan.packing[0]!.name)), "the packing list");
+    const sticky = must(lineage(summary.parent).find((el) => contains(plan, el.index) && stickyAt(el, DESKTOP)), "a sticky plan head at 1280 px");
+    assert.ok(style(sticky, "top", DESKTOP) !== undefined, "the sticky head sets top");
+    assert.equal(contains(sticky, packing.index), false, "the packing list is not in the sticky part, so it cannot grow with the packs");
+    assert.equal(contains(sticky, timeline.index), false, "the timeline flows with the page, below the head");
+    const notes = must(page.flat.find((t) => t.index > packSection(page).last && t.text.includes(page.plan.notes[0]!)), "the notes");
+    assert.equal(contains(sticky, notes.index), false, "the notes flow with the page, below the head");
+    // A display: contents wrapper makes no box, so the head's containing block is the first real box above it.
+    const block = lineage(sticky).slice(1).find((el) => !classes(el).includes("contents"));
+    assert.ok(block && contains(block, timeline.index), "the head sticks over the whole plan column");
+    const scrollers = elements(plan).filter((el) => OVERFLOW.some((prop) => /auto|scroll/.test(style(el, prop, DESKTOP) ?? "")));
+    assert.deepEqual(scrollers.map((el) => `<${el.tag} class="${classes(el).join(" ")}">`), [], "nothing in the plan column scrolls in its own box");
+  }
 });
 
 test("at 1280 px no sticky phone bar is shown", () => {

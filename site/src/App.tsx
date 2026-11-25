@@ -48,15 +48,12 @@ export default function App() {
           <PlanForm session={settings.session} relevant={relevant} onChange={setSession} />
           <FuelPackEditor packs={allPacks} selected={settings.selected} onToggle={toggle} onAdd={addPack} onRemove={removePack} />
         </div>
-        <div aria-label="Your plan" role="region" className="flex flex-col gap-10">
-          {/* From lg up (on screens tall enough to hold it) the lacquer panel sticks while the inputs
-              scroll; the timeline and notes flow with the page, so nothing scrolls in a box. The
-              backing strip above it keeps scrolled text from showing through the gap. */}
-          <div className="lg:[@media(min-height:46rem)]:sticky lg:[@media(min-height:46rem)]:top-0 lg:[@media(min-height:46rem)]:z-10 lg:-mt-4 lg:bg-bg lg:pt-4">
-            <Summary plan={plan} durationMin={settings.session.durationMin} />
+        <div aria-label="Your plan" role="region" className="flex flex-col">
+          <Summary plan={plan} durationMin={settings.session.durationMin} />
+          <div className="mt-10 flex flex-col gap-10">
+            <Advice notes={plan.notes} />
+            <Timeline events={plan.events} fuelOwed={plan.targets.carbsPerHour > 0} blocked={plan.blocked !== null} />
           </div>
-          <Advice notes={plan.notes} />
-          <Timeline events={plan.events} fuelOwed={plan.targets.carbsPerHour > 0} blocked={plan.blocked !== null} />
         </div>
       </main>
       <footer className="border-t border-hairline py-6 text-sm text-muted">
