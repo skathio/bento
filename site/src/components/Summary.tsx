@@ -20,7 +20,7 @@ const STROKE_ON_LACQUER: Record<PackKind, string> = {
 function Compartment({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5 bg-box px-4 py-3.5 sm:px-3.5">
-      <span className="text-sm text-on-box-muted">{label}</span>
+      <span className="text-sm font-medium text-ume">{label}</span>
       <span className="tabular text-[1.75rem] leading-tight font-semibold tracking-tight whitespace-nowrap text-on-box sm:text-2xl">{value}</span>
       <span className="text-xs leading-snug text-on-box-muted">{sub}</span>
     </div>
@@ -46,7 +46,7 @@ function SessionStrip({ events, durationMin }: { events: IntakeEvent[]; duration
         role="img"
         aria-label={`${events.length} intakes over ${fmtDuration(durationMin)}`}
       >
-        <line x1="0" y1="14" x2={STRIP_W} y2="14" className="stroke-box-line" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        <line x1="0" y1="14" x2={STRIP_W} y2="14" className="stroke-box-ring" strokeWidth="2" vectorEffect="non-scaling-stroke" />
         {hours.map((h) => (
           <line key={h} x1={x(h)} y1="9" x2={x(h)} y2="19" className="stroke-box-line" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         ))}
@@ -107,7 +107,7 @@ const STICKY_HEAD = "lg:[@media(min-height:36rem)]:sticky lg:[@media(min-height:
 function Head({ durationMin, joined = false, children }: { durationMin: number; joined?: boolean; children: ReactNode }) {
   return (
     <div className={STICKY_HEAD}>
-      <div className={`bg-box text-on-box ring-1 ring-box-line ${joined ? "rounded-t-2xl" : "rounded-2xl"}`}>
+      <div className={`bg-box text-on-box ring-1 ring-box-ring ${joined ? "rounded-t-2xl" : "rounded-2xl"}`}>
         <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-3">
           <h2 className="text-lg font-semibold tracking-tight">Your bento</h2>
           <span className="tabular text-sm text-on-box-muted">{fmtDuration(durationMin)}</span>
@@ -147,7 +147,7 @@ export default function Summary({ plan, durationMin }: { plan: Plan; durationMin
           <SessionStrip events={events} durationMin={durationMin} />
         </div>
       </Head>
-      <div className="-mt-px rounded-b-2xl border-t border-box-line bg-box px-4 pt-3 pb-4 text-on-box ring-1 ring-box-line">
+      <div className="-mt-px rounded-b-2xl border-t border-box-line bg-box px-4 pt-3 pb-4 text-on-box ring-1 ring-box-ring">
         {stretches ? (
           <>
             <h3 className="font-semibold">Carry per stretch</h3>

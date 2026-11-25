@@ -6,7 +6,7 @@
    need dark: variants.
    Bento's look: the plan is the bento box itself, a black-lacquer panel with ume-pink dividers
    like the favicon; everything around it is quiet stone and ink. Accent ume is for the brand and
-   focus only; a selected control is filled with ink.
+   focus and every selected control.
    Contrast (WCAG 2.2 AA, checked by tests/typeface-tokens.test.ts): ink, muted, bad and the
    pack-kind colours reach 4.5:1 on their surfaces; accent and line reach 3:1, because they draw
    focus rings and control boundaries. hairline is for decorative dividers only, never a control edge. */
@@ -22,15 +22,17 @@
   --color-accent-hi: light-dark(#b3305f, #ff9cc4);
   --color-accent-lo: light-dark(#7a1440, #e0679a);
   --color-on-accent: light-dark(#fff7fa, #2a0716);
-  /* The selected state of a choice: solid ink, so the accent stays the brand's. */
-  --color-select: light-dark(#17151a, #eeebf1);
-  --color-on-select: light-dark(#fbfaf8, #17151a);
-  /* The lacquer box: the same in both themes, a touch lifted from the page in dark. */
-  --color-box: light-dark(#1d0e16, #22101a);
-  --color-box-2: light-dark(#2a1520, #2e1623);
-  --color-box-line: light-dark(#5a2a40, #5e2c43);
-  --color-on-box: light-dark(#f8eff3, #f8eff3);
-  --color-on-box-muted: light-dark(#cdb3c0, #cdb3c0);
+  /* The selected state of a choice: solid ume, Bento's brand colour, flat (no gradient). */
+  --color-select: light-dark(#9b1d52, #f47fae);
+  --color-on-select: light-dark(#fff7fa, #2a0716);
+  /* The plan box takes the favicon's own colours: the plum-black of its disc, its ume ring
+     (#a3245f) and its glowing pink strokes (#ff85b8). The same in both themes. */
+  --color-box: light-dark(#2a0c1b, #2a0c1b);
+  --color-box-2: light-dark(#35102a, #35102a);
+  --color-box-line: light-dark(#7a1d47, #7a1d47);
+  --color-box-ring: light-dark(#a3245f, #a3245f);
+  --color-on-box: light-dark(#fbf3f7, #fbf3f7);
+  --color-on-box-muted: light-dark(#e2b8cb, #e2b8cb);
   --color-ume: light-dark(#ff85b8, #ff85b8);
   --color-gel: light-dark(#8a4f00, #f0b44a);
   --color-gel-bg: light-dark(#fbefd6, #33260e);

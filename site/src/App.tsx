@@ -43,7 +43,7 @@ export default function App() {
         <ThemeToggle />
       </header>
       <TargetsBar plan={plan} />
-      <main className="grid gap-10 pt-6 pb-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-12 lg:pt-2">
+      <main className="grid grid-cols-[minmax(0,1fr)] gap-10 pt-6 pb-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-12 lg:pt-2">
         <div className="flex flex-col gap-10">
           <PlanForm session={settings.session} relevant={relevant} onChange={setSession} />
           <FuelPackEditor packs={allPacks} selected={settings.selected} onToggle={toggle} onAdd={addPack} onRemove={removePack} />

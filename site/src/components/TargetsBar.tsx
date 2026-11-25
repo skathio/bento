@@ -8,7 +8,7 @@ import { targetValues } from "./ui.tsx";
  * would be noise.
  */
 export default function TargetsBar({ plan }: { plan: Plan }) {
-  const bar = "sticky top-0 z-10 -mx-4 bg-box px-4 py-2.5 text-on-box shadow-md lg:hidden";
+  const bar = "sticky top-0 z-10 -mx-4 border-b border-box-ring bg-box px-4 py-2.5 text-on-box shadow-md lg:hidden";
   if (plan.blocked) {
     return (
       <div className={bar}>
@@ -22,9 +22,9 @@ export default function TargetsBar({ plan }: { plan: Plan }) {
     <div className={bar}>
       <dl aria-label="Targets per hour" className="grid grid-cols-3 gap-px bg-box-line">
         {items.map(([label, v]) => (
-          <div key={label} className="min-w-0 bg-box px-3 first:pl-0">
-            <dt className="text-xs text-on-box-muted">{label}</dt>
-            <dd className="tabular truncate text-base font-semibold">{v}</dd>
+          <div key={label} className="min-w-0 bg-box px-2 first:pl-0 min-[360px]:px-3">
+            <dt className="text-xs font-medium text-ume">{label}</dt>
+            <dd className="tabular truncate text-sm font-semibold min-[360px]:text-base">{v}</dd>
           </div>
         ))}
       </dl>
