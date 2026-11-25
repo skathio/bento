@@ -8,9 +8,13 @@ import { fmtPace, parsePace } from "../lib/format.ts";
 import { ftpWatts } from "../lib/factors.ts";
 import { ALTITUDE_FROM_M, type Relevant } from "../lib/options.ts";
 import { AIRFLOWS, GUT_LEVELS } from "../lib/types.ts";
-import { Card, Segmented } from "./ui.tsx";
+import { Section, Segmented } from "./ui.tsx";
 
 type NumberKey = keyof typeof RANGES;
+
+// The box around an input and its unit. The input's own outline is off, so the box shows keyboard
+// focus instead, with the same 2 px accent outline every other control gets.
+const FIELD_BOX = "flex min-h-12 items-center gap-2 rounded-xl border bg-surface px-3.5 focus-within:border-accent focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent";
 
 interface FieldProps {
   field: NumberKey;
@@ -38,8 +42,8 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted">{label}</span>
-        <span className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 focus-within:border-accent">
+        <span className="text-sm font-medium text-muted">{label}</span>
+        <span className={`${FIELD_BOX} border-line`}>
           <input
             aria-describedby={hint ? hintId : undefined}
             type="number"
@@ -51,9 +55,9 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
             onChange={(e) => type(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
-            className="tabular w-full min-w-0 bg-transparent outline-none"
+            className="tabular w-full min-w-0 bg-transparent text-lg font-medium outline-none"
           />
-          <span className="text-xs text-muted">{unit}</span>
+          <span className="text-sm text-muted">{unit}</span>
         </span>
       </label>
       {hint && <span id={hintId} className="text-xs text-muted">{hint}</span>}
@@ -86,8 +90,8 @@ function PaceField({ field, label, hint, session, onChange }: PaceProps) {
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted">{label}</span>
-        <span className={`flex items-center gap-2 rounded-xl border bg-surface px-3 py-1.5 focus-within:border-accent ${bad ? "border-bad" : "border-line"}`}>
+        <span className="text-sm font-medium text-muted">{label}</span>
+        <span className={`${FIELD_BOX} ${bad ? "border-bad" : "border-line"}`}>
           <input
             inputMode="decimal"
             placeholder="m:ss"
@@ -97,9 +101,9 @@ function PaceField({ field, label, hint, session, onChange }: PaceProps) {
             onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
             aria-invalid={bad}
             aria-describedby={hintId}
-            className="tabular w-full min-w-0 bg-transparent outline-none"
+            className="tabular w-full min-w-0 bg-transparent text-lg font-medium outline-none"
           />
-          <span className="text-xs text-muted">/km</span>
+          <span className="text-sm text-muted">/km</span>
         </span>
       </label>
       <span id={hintId} className={`text-xs ${bad ? "text-bad" : "text-muted"}`}>{bad ? "Type a pace like 5:30" : hint}</span>
@@ -109,8 +113,8 @@ function PaceField({ field, label, hint, session, onChange }: PaceProps) {
 
 function Check({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
   return (
-    <label className="flex min-h-11 items-center gap-3 text-sm">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-5 shrink-0 accent-accent" />
+    <label className="flex min-h-11 items-center gap-3 text-[0.9375rem]">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-5 shrink-0 accent-select" />
       <span>{children}</span>
     </label>
   );
@@ -125,15 +129,17 @@ const EFFORT_LABEL = Object.fromEntries(Object.entries(EFFORTS).map(([id, e]) =>
 const ICON: Record<Activity, ReactNode> = {
   bike: (
     <>
+      {/* A road bike: diamond frame (chainstay, seat and top tubes, down tube), fork, saddle, bars. */}
       <circle cx="5.5" cy="16.5" r="3.5" />
       <circle cx="18.5" cy="16.5" r="3.5" />
-      <path d="M5.5 16.5 9.5 9h6.5l2.5 7.5M9.5 9l3 7.5L16 9M8 6.5h3M15 6.5h2.5L16 9" />
+      <path d="M5.5 16.5H11L15.5 10H9L5.5 16.5M9 10l2 6.5M15.5 10l3 6.5M9 10V8M7.5 8h3M15.5 10l-.7-2.5H17" />
     </>
   ),
   run: (
     <>
-      <circle cx="14.5" cy="4.5" r="1.8" />
-      <path d="M7 21l3.5-5 2.5 2v4M10.5 16 12 9.5l-3 1.5-1.5 3M12 9.5l3 3 3.5-1M12 9.5l2.5-2.5" />
+      {/* A runner mid-stride: arms swinging, front leg landing, back leg pushing off. */}
+      <circle cx="14.5" cy="4.5" r="2" />
+      <path d="M8 11.5 10.5 9h3.5l2.5 3H19M14 9l-2 5 3 2.5V21M12 14l-2 3.5H6" />
     </>
   ),
 };
@@ -149,7 +155,7 @@ function ActivityPicker({ value, onChange }: { value: Activity; onChange: (a: Ac
           role="radio"
           aria-checked={a === value}
           onClick={() => onChange(a)}
-          className={`flex items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3 text-base font-semibold transition-colors ${a === value ? "border-accent bg-lacquer text-on-accent" : "border-line bg-surface hover:border-accent"}`}
+          className={`flex min-h-14 items-center justify-center gap-2.5 rounded-xl border px-3 text-base font-semibold transition-colors ${a === value ? "border-select bg-select text-on-select" : "border-line bg-surface hover:border-ink"}`}
         >
           <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {ICON[a]}
@@ -170,8 +176,8 @@ function ftpHint(s: Session): string {
 function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="mb-1 text-xs font-semibold tracking-wide text-muted uppercase">{title}</legend>
-      {note && <p className="-mt-2 text-xs text-muted">{note}</p>}
+      <legend className="mb-1 text-[0.9375rem] font-semibold">{title}</legend>
+      {note && <p className="-mt-2 text-sm text-muted">{note}</p>}
       {children}
     </fieldset>
   );
@@ -188,21 +194,27 @@ export default function PlanForm({ session, relevant, onChange }: FormProps) {
   const activity = DISCIPLINES[session.discipline].activity;
   const pickDiscipline = (discipline: DisciplineId) => onChange({ discipline, effort: keepEffort(session.effort, discipline) });
   return (
-    <Card title="Session">
-      <div className="flex flex-col gap-3">
+    <Section title="Session">
+      <div className="flex flex-col gap-4">
         <ActivityPicker value={activity} onChange={(a) => a !== activity && pickDiscipline(DEFAULT_DISCIPLINE[a])} />
         <Segmented label={`${ACTIVITY_LABEL[activity]} type`} value={session.discipline} options={disciplinesOf(activity)} labels={DISCIPLINE_LABEL} onChange={pickDiscipline} />
         <div className="flex flex-col gap-1">
           <Segmented label="Workout" value={session.effort} options={effortsFor(session.discipline)} labels={EFFORT_LABEL} onChange={(effort) => onChange({ effort })} />
-          <span className="text-xs text-muted">{EFFORTS[session.effort].hint}</span>
+          <span className="text-sm text-muted">{EFFORTS[session.effort].hint}</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <NumberField field="durationMin" label="Duration" unit="min" {...field} />
           <NumberField field="tempC" label="Temperature" unit="°C" {...field} />
         </div>
-        <details className="rounded-xl border border-line px-3">
-          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">More options</summary>
-          <div className="flex flex-col gap-4 pb-3">
+        <details className="group rounded-xl border border-line bg-surface px-3.5">
+          <summary className="flex min-h-12 cursor-pointer items-center gap-3">
+            <span className="flex-1">
+              <span className="block text-[0.9375rem] font-medium">More options</span>
+              <span className="block text-sm text-muted" aria-hidden="true">Pace or power, gut training, sweat and refills</span>
+            </span>
+            <svg viewBox="0 0 24 24" className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+          </summary>
+          <div className="flex flex-col gap-5 border-t border-hairline pt-4 pb-4">
             {relevant.paceOrPower && (
               <Group
                 title="Effort"
@@ -253,6 +265,6 @@ export default function PlanForm({ session, relevant, onChange }: FormProps) {
           </div>
         </details>
       </div>
-    </Card>
+    </Section>
   );
 }

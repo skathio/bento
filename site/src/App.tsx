@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import Advice from "./components/Advice.tsx";
 import FuelPackEditor from "./components/FuelPackEditor.tsx";
 import PlanForm from "./components/PlanForm.tsx";
 import Summary from "./components/Summary.tsx";
+import TargetsBar from "./components/TargetsBar.tsx";
 import ThemeToggle from "./components/ThemeToggle.tsx";
 import Timeline from "./components/Timeline.tsx";
 import logo from "../favicon.svg";
@@ -31,26 +33,30 @@ export default function App() {
     setSettings((s) => ({ ...s, custom: s.custom.filter((p) => p.id !== id), selected: s.selected.filter((x) => x !== id) }));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-safe">
-      <header className="flex items-center gap-3 py-5">
-        <img src={logo} alt="" className="size-9" />
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">Bento</h1>
-          <p className="text-sm text-muted">Pack your fuel: carbs, fluid and sodium for rides, runs and trail runs.</p>
+    <div className="mx-auto max-w-6xl px-4 pb-safe lg:px-8">
+      <header className="flex items-center gap-3 py-4 lg:py-6">
+        <img src={logo} alt="" className="size-10" />
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl leading-tight font-bold tracking-tight">Bento</h1>
+          <p className="text-sm text-muted">Fuel, fluid and sodium for rides and runs.</p>
         </div>
         <ThemeToggle />
       </header>
-      <main className="grid gap-5 pb-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="flex flex-col gap-5">
+      <TargetsBar plan={plan} />
+      <main className="grid grid-cols-[minmax(0,1fr)] gap-10 pt-6 pb-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-12 lg:pt-2">
+        <div className="flex flex-col gap-10">
           <PlanForm session={settings.session} relevant={relevant} onChange={setSession} />
           <FuelPackEditor packs={allPacks} selected={settings.selected} onToggle={toggle} onAdd={addPack} onRemove={removePack} />
         </div>
-        <div className="flex flex-col gap-5">
+        <div aria-label="Your plan" role="region" className="flex flex-col">
           <Summary plan={plan} durationMin={settings.session.durationMin} />
-          <Timeline events={plan.events} fuelOwed={plan.targets.carbsPerHour > 0} blocked={plan.blocked !== null} />
+          <div className="mt-10 flex flex-col gap-10">
+            <Advice notes={plan.notes} />
+            <Timeline events={plan.events} fuelOwed={plan.targets.carbsPerHour > 0} blocked={plan.blocked !== null} />
+          </div>
         </div>
       </main>
-      <footer className="border-t border-line py-6 text-xs text-muted">
+      <footer className="border-t border-hairline py-6 text-sm text-muted">
         Bento gives general guidance from sports-nutrition research, not medical advice. Test every product in training.
       </footer>
     </div>

@@ -1,21 +1,24 @@
 import { fmtClock, fmtFluid, fmtGrams } from "../lib/format.ts";
 import type { IntakeEvent } from "../lib/types.ts";
-import { Card, KindBadge } from "./ui.tsx";
+import { KindDot, Section } from "./ui.tsx";
 
-function detail(e: IntakeEvent): string {
+/** What to take at a prompt, as separate items, so the line reads without separator characters. */
+function detail(e: IntakeEvent): string[] {
   const parts = e.carbsG > 0 ? [fmtGrams(e.carbsG) + " carbs"] : [`${e.sodiumMg} mg sodium`];
   if (e.fluidMl > 0) parts.push(`${fmtFluid(e.fluidMl)} bottle, sip it until the next prompt`);
   if (e.kind === "gel") parts.push("with 150-250 ml water");
   if (e.caffeineMg > 0) parts.push(`${e.caffeineMg} mg caffeine`);
-  return parts.join(" · ");
+  return parts;
 }
 
+// A table-like list: elapsed time in a fixed column, then what to take, then the running carb
+// total. The kind dot repeats the colour of the session strip in the plan panel.
 export default function Timeline({ events, fuelOwed, blocked }: { events: IntakeEvent[]; fuelOwed: boolean; blocked: boolean }) {
   let cumulative = 0;
   return (
-    <Card title="Timeline" aside={<span className="text-xs text-muted">elapsed time</span>}>
+    <Section title="Timeline" aside="elapsed time">
       {events.length === 0 ? (
-        <p className="text-sm text-muted">
+        <p className="text-[0.9375rem] text-muted">
           {blocked
             ? "No timeline in these conditions."
             : fuelOwed
@@ -23,24 +26,25 @@ export default function Timeline({ events, fuelOwed, blocked }: { events: Intake
               : "Nothing to eat on the go for this session. Drink to thirst."}
         </p>
       ) : (
-        <ol className="relative flex flex-col gap-0 border-l-2 border-line pl-4">
+        <ol className="flex flex-col">
           {events.map((e) => {
             cumulative += e.carbsG;
             return (
-              <li key={`${e.minute}-${e.packId}`} className="relative py-2">
-                <span className="bg-lacquer absolute top-3.5 -left-[1.4rem] size-2.5 rounded-full" aria-hidden="true" />
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="tabular w-12 font-mono text-sm font-semibold">{fmtClock(e.minute)}</span>
-                  <span className="text-sm font-medium">{e.name}</span>
-                  <KindBadge kind={e.kind} />
-                  {e.carbsG > 0 && <span className="tabular ml-auto text-xs text-muted">{fmtGrams(cumulative)} total</span>}
-                </div>
-                <div className="pl-14 text-xs text-muted">{detail(e)}</div>
+              <li key={`${e.minute}-${e.packId}`} className="grid grid-cols-[3.25rem_1fr_auto] gap-x-3 border-t border-hairline py-2.5 first:border-t-0">
+                <span className="tabular pt-px text-[0.9375rem] font-semibold">{fmtClock(e.minute)}</span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <KindDot kind={e.kind} />
+                    <span className="min-w-0 text-[0.9375rem] font-medium wrap-anywhere">{e.name}</span>
+                  </span>
+                  <span className="mt-0.5 flex flex-wrap gap-x-3 pl-4 text-sm text-muted">{detail(e).map((d) => <span key={d}>{d}</span>)}</span>
+                </span>
+                <span className="tabular pt-px text-right text-sm text-muted">{e.carbsG > 0 && `${fmtGrams(cumulative)} total`}</span>
               </li>
             );
           })}
         </ol>
       )}
-    </Card>
+    </Section>
   );
 }

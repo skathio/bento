@@ -3,32 +3,57 @@
 /* Design tokens. Tailwind v4 exposes these as utilities (bg-surface, text-muted, ...).
    Each token holds both palettes through light-dark(), which follows color-scheme:
    the OS by default, or the theme pinned by data-theme on <html>. Components never
-   need dark: variants. Bento's look: rice-paper cream, black lacquer, ume (the pickled plum in the rice). */
+   need dark: variants.
+   Bento's look: the plan is the bento box itself, an ume-washed panel with ume dividers
+   like the favicon; everything around it is quiet stone and ink. Accent ume is for the brand and
+   focus and every selected control.
+   Contrast (WCAG 2.2 AA, checked by tests/typeface-tokens.test.ts): ink, muted, bad and the
+   pack-kind colours reach 4.5:1 on their surfaces; accent and line reach 3:1, because they draw
+   focus rings and control boundaries. hairline is for decorative dividers only, never a control edge. */
 @theme {
-  --color-bg: light-dark(#f7f2e7, #121011);
-  --color-surface: light-dark(#fffdf8, #1b1819);
-  --color-surface-2: light-dark(#efe8d8, #252122);
-  --color-ink: light-dark(#1d1815, #ece6df);
-  --color-muted: light-dark(#6c6158, #a69b92);
-  --color-line: light-dark(#e3d9c4, #332d2c);
-  --color-accent: light-dark(#a3245f, #ff85b8);
-  --color-accent-hi: light-dark(#c13a78, #ffa3cb);
-  --color-accent-lo: light-dark(#7c1a49, #f06aa6);
-  --color-on-accent: light-dark(#fff8fb, #2a0716);
-  --color-gel: light-dark(#a8650a, #f2b544);
-  --color-gel-bg: light-dark(#fbefd8, #33260e);
-  --color-solid: light-dark(#2f6e43, #7cc78f);
-  --color-solid-bg: light-dark(#e1f1e4, #15301f);
-  --color-drink: light-dark(#2c5a9e, #8ab0ec);
-  --color-drink-bg: light-dark(#e2ebf8, #16243a);
-  --color-warn: light-dark(#8a5a00, #f1c25f);
-  --color-warn-bg: light-dark(#fbf0d6, #33290e);
-  --color-bad: light-dark(#b3261e, #ff8a80);
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-bg: light-dark(#eceae5, #0f0e11);
+  --color-surface: light-dark(#fbfaf8, #18161b);
+  --color-surface-2: light-dark(#e2dfd8, #242128);
+  --color-ink: light-dark(#17151a, #eeebf1);
+  --color-muted: light-dark(#57525c, #aaa4b0);
+  --color-line: light-dark(#86808b, #77707e);
+  --color-hairline: light-dark(#d6d2ca, #2b2830);
+  --color-accent: light-dark(#9b1d52, #f47fae);
+  --color-accent-hi: light-dark(#b3305f, #ff9cc4);
+  --color-accent-lo: light-dark(#7a1440, #e0679a);
+  --color-on-accent: light-dark(#fff7fa, #2a0716);
+  /* The selected state of a choice: solid ume, Bento's brand colour, flat (no gradient). */
+  --color-select: light-dark(#9b1d52, #f47fae);
+  --color-on-select: light-dark(#fff7fa, #2a0716);
+  /* The plan box (and the phone's targets bar): a soft ume wash over the page, a pale pink in
+     light and a slight plum lift in dark, with ume labels, so the result stands out without a
+     dark block. */
+  --color-box: light-dark(#f8ecf1, #1e1419);
+  --color-box-line: light-dark(#e6c7d5, #3d2531);
+  --color-box-ring: light-dark(#d9a5bd, #5e2c43);
+  --color-on-box: light-dark(#17151a, #f3eef2);
+  --color-on-box-muted: light-dark(#5e4f57, #b8a9b1);
+  --color-ume: light-dark(#9b1d52, #ff85b8);
+  --color-gel: light-dark(#8a4f00, #f0b44a);
+  --color-gel-bg: light-dark(#fbefd6, #33260e);
+  --color-solid: light-dark(#24603a, #84cc96);
+  --color-solid-bg: light-dark(#e2f0e4, #15301f);
+  --color-drink: light-dark(#24508f, #93b6ee);
+  --color-drink-bg: light-dark(#e3ebf7, #16243a);
+  /* Pack kinds inside the plan box: the page's own kind colours, which hold their contrast on the wash. */
+  --color-gel-on-box: light-dark(#8a4f00, #f0b44a);
+  --color-solid-on-box: light-dark(#24603a, #84cc96);
+  --color-drink-on-box: light-dark(#24508f, #93b6ee);
+  --color-warn: light-dark(#7a4f00, #f1c25f);
+  --color-warn-bg: light-dark(#fbf0d4, #33290e);
+  --color-bad: light-dark(#a8241c, #ff8f86);
+  /* Figtree (OFL-1.1) is bundled from @fontsource-variable/figtree and served same-origin; if it
+     fails to load, the system stack takes over with the same layout. */
+  --font-sans: "Figtree Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* Bento's lacquer fill: an ume gradient for primary actions, per theme so text-on-accent stays readable. */
+/* Bento's lacquer fill: an ume gradient for the one primary action, per theme so text-on-accent stays readable. */
 @utility bg-lacquer {
   background-color: var(--color-accent);
   background-image: linear-gradient(135deg, var(--color-accent-hi) 0%, var(--color-accent) 55%, var(--color-accent-lo) 100%);
@@ -41,14 +66,18 @@
   a, button, summary, select, label { touch-action: manipulation; }
   :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
   input, select { background-color: var(--color-surface); color: var(--color-ink); }
+  /* Below lg the targets bar sticks to the top: keep a focused input from scrolling under it. */
+  @media (width < 64rem) { html { scroll-padding-top: 4.5rem; } }
   h1, h2, h3 { text-wrap: balance; }
   p { text-wrap: pretty; }
   body { @apply bg-bg text-ink font-sans antialiased; }
   summary { list-style: none; cursor: pointer; }
   summary::-webkit-details-marker { display: none; }
-  @media (prefers-reduced-motion: reduce) {
-    *, ::before, ::after { transition: none; animation: none; }
-  }
+}
+
+/* Unlayered on purpose: it then beats every layered rule, Tailwind's transition utilities included. */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { transition: none; animation: none; scroll-behavior: auto; }
 }
 
 @utility tabular { font-variant-numeric: tabular-nums; }
