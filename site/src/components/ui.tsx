@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { fmtFluid } from "../lib/format.ts";
-import { KIND_LABEL } from "../lib/products.ts";
 import type { PackKind, Targets } from "../lib/types.ts";
 
 /**
@@ -53,21 +52,10 @@ export function Segmented<T extends string>({ label, value, options, labels, onC
 }
 
 const DOT_CLASS: Record<PackKind, string> = { gel: "bg-gel", solid: "bg-solid", drink: "bg-drink" };
-const TEXT_CLASS: Record<PackKind, string> = { gel: "text-gel", solid: "text-solid", drink: "text-drink" };
 
 /** A pack kind's colour as a small dot; decorative, a text label always sits beside it. */
 export function KindDot({ kind, className = "" }: { kind: PackKind; className?: string }) {
   return <span className={`size-2 shrink-0 rounded-full ${DOT_CLASS[kind]} ${className}`} aria-hidden="true" />;
-}
-
-/** A pack's kind as a coloured dot and its name, quiet enough to sit on every row. */
-export function KindBadge({ kind }: { kind: PackKind }) {
-  return (
-    <span className={`inline-flex shrink-0 items-center gap-1.5 text-xs font-medium ${TEXT_CLASS[kind]}`}>
-      <span className={`size-2 rounded-full ${DOT_CLASS[kind]}`} aria-hidden="true" />
-      {KIND_LABEL[kind]}
-    </span>
-  );
 }
 
 /** The per-hour targets as shown in the plan panel and the phone's targets bar. */
