@@ -3,28 +3,34 @@
 /* Design tokens. Tailwind v4 exposes these as utilities (bg-surface, text-muted, ...).
    Each token holds both palettes through light-dark(), which follows color-scheme:
    the OS by default, or the theme pinned by data-theme on <html>. Components never
-   need dark: variants. Bento's look: rice-paper cream, black lacquer, ume (the pickled plum in the rice). */
+   need dark: variants. Bento's look: rice-paper cream, black lacquer, ume (the pickled plum in the rice).
+   Contrast (WCAG 2.2 AA, checked by tests/typeface-tokens.test.ts): ink, muted, bad and the
+   pack-kind colours reach 4.5:1 on their surfaces; accent and line reach 3:1, because they draw
+   focus rings and control boundaries. hairline is for decorative dividers only, never a control edge. */
 @theme {
-  --color-bg: light-dark(#f7f2e7, #121011);
-  --color-surface: light-dark(#fffdf8, #1b1819);
-  --color-surface-2: light-dark(#efe8d8, #252122);
-  --color-ink: light-dark(#1d1815, #ece6df);
-  --color-muted: light-dark(#6c6158, #a69b92);
-  --color-line: light-dark(#e3d9c4, #332d2c);
-  --color-accent: light-dark(#a3245f, #ff85b8);
-  --color-accent-hi: light-dark(#c13a78, #ffa3cb);
-  --color-accent-lo: light-dark(#7c1a49, #f06aa6);
-  --color-on-accent: light-dark(#fff8fb, #2a0716);
-  --color-gel: light-dark(#a8650a, #f2b544);
-  --color-gel-bg: light-dark(#fbefd8, #33260e);
-  --color-solid: light-dark(#2f6e43, #7cc78f);
-  --color-solid-bg: light-dark(#e1f1e4, #15301f);
-  --color-drink: light-dark(#2c5a9e, #8ab0ec);
-  --color-drink-bg: light-dark(#e2ebf8, #16243a);
-  --color-warn: light-dark(#8a5a00, #f1c25f);
-  --color-warn-bg: light-dark(#fbf0d6, #33290e);
-  --color-bad: light-dark(#b3261e, #ff8a80);
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-bg: light-dark(#f6f1e8, #131012);
+  --color-surface: light-dark(#fffcf7, #1c181a);
+  --color-surface-2: light-dark(#efe8dc, #262124);
+  --color-ink: light-dark(#1c1917, #eee8e1);
+  --color-muted: light-dark(#5f564e, #ada299);
+  --color-line: light-dark(#8a7f73, #7a6f6a);
+  --color-hairline: light-dark(#e4dccd, #2e282a);
+  --color-accent: light-dark(#9b1d52, #f47fae);
+  --color-accent-hi: light-dark(#b3305f, #ff9cc4);
+  --color-accent-lo: light-dark(#7a1440, #e0679a);
+  --color-on-accent: light-dark(#fff7fa, #2a0716);
+  --color-gel: light-dark(#8a4f00, #f0b44a);
+  --color-gel-bg: light-dark(#fbefd6, #33260e);
+  --color-solid: light-dark(#24603a, #84cc96);
+  --color-solid-bg: light-dark(#e2f0e4, #15301f);
+  --color-drink: light-dark(#24508f, #93b6ee);
+  --color-drink-bg: light-dark(#e3ebf7, #16243a);
+  --color-warn: light-dark(#7a4f00, #f1c25f);
+  --color-warn-bg: light-dark(#fbf0d4, #33290e);
+  --color-bad: light-dark(#a8241c, #ff8f86);
+  /* Figtree (OFL-1.1) is bundled from @fontsource-variable/figtree and served same-origin; if it
+     fails to load, the system stack takes over with the same layout. */
+  --font-sans: "Figtree Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
@@ -41,14 +47,18 @@
   a, button, summary, select, label { touch-action: manipulation; }
   :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
   input, select { background-color: var(--color-surface); color: var(--color-ink); }
+  /* Below lg the targets bar sticks to the top: keep a focused input from scrolling under it. */
+  @media (width < 64rem) { html { scroll-padding-top: 4.5rem; } }
   h1, h2, h3 { text-wrap: balance; }
   p { text-wrap: pretty; }
   body { @apply bg-bg text-ink font-sans antialiased; }
   summary { list-style: none; cursor: pointer; }
   summary::-webkit-details-marker { display: none; }
-  @media (prefers-reduced-motion: reduce) {
-    *, ::before, ::after { transition: none; animation: none; }
-  }
+}
+
+/* Unlayered on purpose: it then beats every layered rule, Tailwind's transition utilities included. */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { transition: none; animation: none; scroll-behavior: auto; }
 }
 
 @utility tabular { font-variant-numeric: tabular-nums; }

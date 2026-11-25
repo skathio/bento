@@ -40,7 +40,8 @@ deprecation warning on newer Node versions is harmless.
 ```
 site/                  Vite root (index.html, favicon.svg, apple-touch-icon.png)
   src/main.tsx, App.tsx    mounts the app, holds Settings state, saves to localStorage
-  src/components/      PlanForm, FuelPackEditor, Summary, Timeline, ThemeToggle, ui (shared bits)
+  src/components/      PlanForm, FuelPackEditor, Summary, Timeline, TargetsBar (phone's sticky targets),
+                       ThemeToggle, ui (shared bits), media.ts (lg breakpoint hook)
   src/lib/             pure logic
     activities.ts      Bike/Run disciplines and workouts -> sport, terrain, intensity
     factors.ts         the rules: carb curves, fluid, sodium, caffeine, notes (cites the evidence review)
@@ -48,7 +49,9 @@ site/                  Vite root (index.html, favicon.svg, apple-touch-icon.png)
     options.ts         which "More options" fields can change the plan, so the form shows only those
     products.ts        preset fuel packs; storage.ts parses localStorage defensively
     types.ts, format.ts, theme.ts   shared types, display formatting, light/dark pin
-tests/                 node --test: a file per tested lib module, plus scenarios, csp, ci and requirements
+tests/                 node --test: a file per tested lib module, plus scenarios, csp, ci and requirements;
+                       render and built-site checks: accessibility, layout, typeface-tokens, built-site-walk,
+                       design-decisions, pack-selector, fuel-packs, ui-hardening
 docs/                  methodology.md (every rule value), evidence-review-2026-11.md, research-prompt.md
 tools/build.ts         runs the Vite build
 ```

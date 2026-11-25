@@ -1,6 +1,6 @@
 import { fmtBand, fmtDuration, fmtFluid, fmtGrams, fmtMg } from "../lib/format.ts";
 import type { PackLine, Plan } from "../lib/types.ts";
-import { Card, KindBadge } from "./ui.tsx";
+import { Card, KindBadge, targetValues } from "./ui.tsx";
 
 function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
@@ -14,11 +14,11 @@ function Tile({ label, value, sub }: { label: string; value: string; sub: string
 
 function PackList({ lines, waterMl, waterLabel }: { lines: PackLine[]; waterMl: number; waterLabel: string }) {
   return (
-    <ul className="divide-y divide-line text-sm">
+    <ul className="divide-y divide-hairline text-sm">
       {lines.map((line) => (
         <li key={line.packId} className="flex items-center gap-2 py-1.5">
           <span className="tabular w-8 font-semibold">{line.count}×</span>
-          <span className="flex-1">{line.name}</span>
+          <span className="min-w-0 flex-1 wrap-anywhere">{line.name}</span>
           <KindBadge kind={line.kind} />
         </li>
       ))}
@@ -39,9 +39,10 @@ function caffeineSub(capMg: number, durationMin: number): string {
 
 export default function Summary({ plan, durationMin }: { plan: Plan; durationMin: number }) {
   const { targets: t, totals, packing, notes, blocked, stretches } = plan;
+  const value = targetValues(t);
   if (blocked) {
     return (
-      <Card title="Your bento" aside={<span className="text-xs text-muted">{fmtDuration(durationMin)}</span>}>
+      <Card raised title="Your bento" aside={<span className="text-xs text-muted">{fmtDuration(durationMin)}</span>}>
         <div role="alert" className="rounded-xl border-2 border-bad px-4 py-3">
           <p className="font-semibold text-bad">Too hot to plan safely</p>
           <p className="mt-1 text-sm">{blocked}</p>
@@ -50,11 +51,11 @@ export default function Summary({ plan, durationMin }: { plan: Plan; durationMin
     );
   }
   return (
-    <Card title="Your bento" aside={<span className="text-xs text-muted">{fmtDuration(durationMin)}</span>}>
+    <Card raised title="Your bento" aside={<span className="text-xs text-muted">{fmtDuration(durationMin)}</span>}>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Tile label="Carbs" value={t.carbsPerHour > 0 ? `${t.carbsPerHour} g/h` : "None"} sub={t.carbsPerHour === 0 ? "not needed" : t.ratio ? `${fmtBand(t.carbBand, "g/h")}, glucose:fructose ${t.ratio}` : fmtBand(t.carbBand, "g/h")} />
-        <Tile label="Fluid" value={t.fluidMlPerHour > 0 ? `${fmtFluid(t.fluidMlPerHour)}/h` : "To thirst"} sub={t.fluidPlanned ? `planned · sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h` : `a guide · sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h`} />
-        <Tile label="Sodium" value={t.sodiumNeeded ? `${t.sodiumMgPerHour} mg/h` : "Optional"} sub={t.sodiumNeeded ? "half of sweat losses" : "to taste, up to 500 mg/h"} />
+        <Tile label="Carbs" value={value.carbs} sub={t.carbsPerHour === 0 ? "not needed" : t.ratio ? `${fmtBand(t.carbBand, "g/h")}, glucose:fructose ${t.ratio}` : fmtBand(t.carbBand, "g/h")} />
+        <Tile label="Fluid" value={value.fluid} sub={t.fluidPlanned ? `planned, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h` : `a guide, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h`} />
+        <Tile label="Sodium" value={value.sodium} sub={t.sodiumNeeded ? "half of sweat losses" : "to taste, up to 500 mg/h"} />
         <Tile label="Caffeine" value={t.caffeineCapMg > 0 ? `≤ ${t.caffeineCapMg} mg` : "None"} sub={caffeineSub(t.caffeineCapMg, durationMin)} />
       </div>
 
@@ -72,9 +73,13 @@ export default function Summary({ plan, durationMin }: { plan: Plan; durationMin
           <PackList lines={packing} waterMl={totals.waterMl} waterLabel="(carry or refill)" />
         </>
       )}
-      <p className="tabular mt-2 text-xs text-muted">
-        Totals: {fmtGrams(totals.carbsG)} carbs · {fmtMg(totals.sodiumMg)} sodium · {fmtFluid(totals.fluidMl + totals.waterMl)} fluid
-        {totals.caffeineMg > 0 && ` · ${fmtMg(totals.caffeineMg)} caffeine`} · packs take {fmtFluid(totals.carryVolumeMl)}
+      <p className="tabular mt-2 flex flex-wrap gap-x-3 text-xs text-muted">
+        <span>Totals:</span>
+        <span>{fmtGrams(totals.carbsG)} carbs</span>
+        <span>{fmtMg(totals.sodiumMg)} sodium</span>
+        <span>{fmtFluid(totals.fluidMl + totals.waterMl)} fluid</span>
+        {totals.caffeineMg > 0 && <span>{fmtMg(totals.caffeineMg)} caffeine</span>}
+        <span>packs take {fmtFluid(totals.carryVolumeMl)}</span>
       </p>
 
       {notes.length > 0 && (

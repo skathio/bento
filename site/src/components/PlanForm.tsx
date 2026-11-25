@@ -12,6 +12,10 @@ import { Card, Segmented } from "./ui.tsx";
 
 type NumberKey = keyof typeof RANGES;
 
+// The box around an input and its unit. The input's own outline is off, so the box shows keyboard
+// focus instead, with the same 2 px accent outline every other control gets.
+const FIELD_BOX = "flex min-h-11 items-center gap-2 rounded-xl border bg-surface px-3 py-1.5 focus-within:border-accent focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent";
+
 interface FieldProps {
   field: NumberKey;
   label: string;
@@ -39,7 +43,7 @@ function NumberField({ field, label, unit, hint, session, onChange }: FieldProps
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium text-muted">{label}</span>
-        <span className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 focus-within:border-accent">
+        <span className={`${FIELD_BOX} border-line`}>
           <input
             aria-describedby={hint ? hintId : undefined}
             type="number"
@@ -87,7 +91,7 @@ function PaceField({ field, label, hint, session, onChange }: PaceProps) {
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium text-muted">{label}</span>
-        <span className={`flex items-center gap-2 rounded-xl border bg-surface px-3 py-1.5 focus-within:border-accent ${bad ? "border-bad" : "border-line"}`}>
+        <span className={`${FIELD_BOX} ${bad ? "border-bad" : "border-line"}`}>
           <input
             inputMode="decimal"
             placeholder="m:ss"
@@ -149,7 +153,7 @@ function ActivityPicker({ value, onChange }: { value: Activity; onChange: (a: Ac
           role="radio"
           aria-checked={a === value}
           onClick={() => onChange(a)}
-          className={`flex items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3 text-base font-semibold transition-colors ${a === value ? "border-accent bg-lacquer text-on-accent" : "border-line bg-surface hover:border-accent"}`}
+          className={`flex items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3 text-base font-semibold transition-colors ${a === value ? "border-accent bg-accent text-on-accent" : "border-line bg-surface hover:border-accent"}`}
         >
           <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {ICON[a]}
@@ -170,7 +174,7 @@ function ftpHint(s: Session): string {
 function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="mb-1 text-xs font-semibold tracking-wide text-muted uppercase">{title}</legend>
+      <legend className="mb-1 text-sm font-semibold">{title}</legend>
       {note && <p className="-mt-2 text-xs text-muted">{note}</p>}
       {children}
     </fieldset>

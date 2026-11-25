@@ -10,4 +10,5 @@ test("the CSP is added to the built page only, never the dev server", () => {
   assert.deepEqual(transform()[0]?.attrs, { "http-equiv": "Content-Security-Policy", content: CSP });
   assert.match(CSP, /script-src 'self';/);
   assert.match(CSP, /style-src 'self';/);
+  assert.match(CSP, /font-src 'self';/);
 });

@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { applyTheme, loadTheme } from "./lib/theme.ts";
+import "@fontsource-variable/figtree";
 import "./styles.css";
 
 // Apply the stored theme before the first render to avoid a flash.

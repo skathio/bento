@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import FuelPackEditor from "./components/FuelPackEditor.tsx";
 import PlanForm from "./components/PlanForm.tsx";
 import Summary from "./components/Summary.tsx";
+import TargetsBar from "./components/TargetsBar.tsx";
 import ThemeToggle from "./components/ThemeToggle.tsx";
 import Timeline from "./components/Timeline.tsx";
+import { useLgUp } from "./components/media.ts";
 import logo from "../favicon.svg";
 import { relevantOptions } from "./lib/options.ts";
 import { buildPlan } from "./lib/plan.ts";
@@ -14,6 +16,7 @@ import type { FuelPack } from "./lib/types.ts";
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   useEffect(() => saveSettings(settings), [settings]);
+  const lgUp = useLgUp();
 
   const allPacks = useMemo(() => [...PRESETS, ...settings.custom], [settings.custom]);
   const { plan, relevant } = useMemo(() => {
@@ -40,17 +43,24 @@ export default function App() {
         </div>
         <ThemeToggle />
       </header>
-      <main className="grid gap-5 pb-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <TargetsBar plan={plan} />
+      <main className="grid gap-5 pt-4 pb-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:pt-0 lg:pb-6">
         <div className="flex flex-col gap-5">
           <PlanForm session={settings.session} relevant={relevant} onChange={setSession} />
           <FuelPackEditor packs={allPacks} selected={settings.selected} onToggle={toggle} onAdd={addPack} onRemove={removePack} />
         </div>
-        <div className="flex flex-col gap-5">
+        {/* From lg up the plan stays in view beside the inputs; a long plan scrolls inside its column,
+            so only there is it a tab stop, letting keyboard users scroll it. */}
+        <section
+          aria-label="Your plan"
+          tabIndex={lgUp ? 0 : undefined}
+          className="flex flex-col gap-5 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8rem)] lg:self-start lg:overflow-y-auto"
+        >
           <Summary plan={plan} durationMin={settings.session.durationMin} />
           <Timeline events={plan.events} fuelOwed={plan.targets.carbsPerHour > 0} blocked={plan.blocked !== null} />
-        </div>
+        </section>
       </main>
-      <footer className="border-t border-line py-6 text-xs text-muted">
+      <footer className="border-t border-hairline py-6 text-xs text-muted">
         Bento gives general guidance from sports-nutrition research, not medical advice. Test every product in training.
       </footer>
     </div>

@@ -15,7 +15,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={cycle}
       aria-label={`Theme: ${LABEL[theme]}. Switch theme`}
-      className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-muted hover:text-ink"
+      className="min-h-11 min-w-11 rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-muted hover:text-ink"
     >
       {LABEL[theme]}
     </button>
