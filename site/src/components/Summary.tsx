@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { fmtBand, fmtClock, fmtDuration, fmtFluid, fmtGrams, fmtMg } from "../lib/format.ts";
 import type { IntakeEvent, PackKind, PackLine, Plan } from "../lib/types.ts";
-import { targetValues } from "./ui.tsx";
+import { Measure, targetValues } from "./ui.tsx";
 
 // The plan is the bento box: an ume-washed panel whose compartments, split by thin ume lines
 // like the favicon's, hold the per-hour targets. It is the page's one bold element.
@@ -21,7 +21,7 @@ function Compartment({ label, value, sub }: { label: string; value: string; sub:
   return (
     <div className="flex min-w-0 flex-col gap-0.5 bg-box px-4 py-3.5 sm:px-3.5">
       <span className="text-sm font-medium text-ume">{label}</span>
-      <span className="tabular text-[1.75rem] leading-tight font-semibold tracking-tight whitespace-nowrap text-on-box sm:text-2xl">{value}</span>
+      <span className="tabular text-xl leading-tight font-semibold tracking-tight whitespace-nowrap text-on-box min-[360px]:text-[1.75rem] sm:text-2xl"><Measure value={value} /></span>
       <span className="text-xs leading-snug text-on-box-muted">{sub}</span>
     </div>
   );
@@ -136,8 +136,10 @@ export default function Summary({ plan, durationMin }: { plan: Plan; durationMin
   return (
     <section aria-label="Your bento" className="contents">
       <Head durationMin={durationMin} joined>
-        {/* The compartments: a 1 px gap over the divider colour draws the bento's dividers. */}
-        <div className="grid grid-cols-2 gap-px border-y border-box-line bg-box-line sm:grid-cols-4">
+        {/* The compartments: a 1 px gap over the divider colour draws the bento's dividers. Four in a row
+            only where the panel spans the page (sm to lg); in the narrower desktop plan column they
+            go 2 by 2, so a value like "1000 mg/h" always has room on one line. */}
+        <div className="grid grid-cols-2 gap-px border-y border-box-line bg-box-line sm:grid-cols-4 lg:grid-cols-2">
           <Compartment label="Carbs" value={value.carbs} sub={t.carbsPerHour === 0 ? "not needed" : t.ratio ? `${fmtBand(t.carbBand, "g/h")}, glucose:fructose ${t.ratio}` : fmtBand(t.carbBand, "g/h")} />
           <Compartment label="Fluid" value={value.fluid} sub={t.fluidPlanned ? `planned, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h` : `a guide, sweat ≈ ${t.sweatRateLh.toFixed(2)} L/h`} />
           <Compartment label="Sodium" value={value.sodium} sub={t.sodiumNeeded ? "half of sweat losses" : "to taste, up to 500 mg/h"} />

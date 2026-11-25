@@ -1,5 +1,5 @@
 import type { Plan } from "../lib/types.ts";
-import { targetValues } from "./ui.tsx";
+import { Measure, targetValues } from "./ui.tsx";
 
 /**
  * The phone's sticky strip of per-hour targets, in the plan panel's ume wash, so they stay in
@@ -24,7 +24,7 @@ export default function TargetsBar({ plan }: { plan: Plan }) {
         {items.map(([label, v]) => (
           <div key={label} className="min-w-0 bg-box px-2 first:pl-0 min-[360px]:px-3">
             <dt className="text-xs font-medium text-ume">{label}</dt>
-            <dd className="tabular truncate text-sm font-semibold min-[360px]:text-base">{v}</dd>
+            <dd className="tabular truncate text-sm font-semibold min-[360px]:text-base"><Measure value={v} /></dd>
           </div>
         ))}
       </dl>

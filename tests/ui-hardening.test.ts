@@ -5,6 +5,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { createElement, type ComponentType } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+
 import type { Targets } from "../site/src/lib/types.ts";
 
 const repo = (path: string) => fileURLToPath(new URL(`../${path}`, import.meta.url));
@@ -12,12 +15,15 @@ const repo = (path: string) => fileURLToPath(new URL(`../${path}`, import.meta.u
 type TargetValues = (t: Targets) => { carbs: string; fluid: string; sodium: string };
 
 let targetValues: TargetValues | null = null;
+let Measure: ComponentType<{ value: string }> | null = null;
 
 before(async () => {
   const { createServer } = await import("vite");
   const server = await createServer({ configFile: repo("vite.config.ts"), root: repo("site"), logLevel: "silent", server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom" });
   try {
-    targetValues = (await server.ssrLoadModule("/src/components/ui.tsx")).targetValues as TargetValues;
+    const ui = await server.ssrLoadModule("/src/components/ui.tsx");
+    targetValues = ui.targetValues as TargetValues;
+    Measure = ui.Measure as ComponentType<{ value: string }>;
   } finally {
     await server.close();
   }
@@ -55,6 +61,25 @@ test("targetValues keeps the smallest positive amounts and formats a litre or mo
 test("targetValues shows sodium whenever it is needed, even at zero mg, and hides the number when optional", () => {
   assert.equal(values({ sodiumMgPerHour: 0 }).sodium, "0 mg/h");
   assert.equal(values({ sodiumMgPerHour: 900, sodiumNeeded: false }).sodium, "Optional");
+});
+
+// ---- Measure: the unit set smaller than the number ----------------------------------------
+
+const measure = (value: string) => {
+  assert.ok(Measure, "Measure loaded");
+  return renderToStaticMarkup(createElement(Measure, { value }));
+};
+
+test("Measure sets each per-hour or caffeine unit in its own smaller span, after the number", () => {
+  for (const [value, num, unit] of [["1000 mg/h", "1000", "mg/h"], ["70 g/h", "70", "g/h"], ["500 ml/h", "500", "ml/h"], ["1.25 L/h", "1.25", "L/h"], ["≤ 400 mg", "≤ 400", "mg"]]) {
+    const html = measure(value!);
+    assert.match(html, new RegExp(`^${num!.replace(".", "\\.")}<span class="[^"]*text-\\[0\\.6em\\][^"]*">${unit!.replace("/", "\\/")}</span>$`), html);
+  }
+});
+
+test("Measure leaves a target with no unit as plain text, and never drops characters", () => {
+  for (const value of ["Optional", "To thirst", "None", "", "mg/h", "1000mg/h"]) assert.equal(measure(value), value.replace("&", "&amp;"));
+  assert.equal(measure("1000 mg/h").replace(/<[^>]+>/g, ""), "1000mg/h", "the number and unit both reach the page");
 });
 
 // ---- CLAUDE.md names every component and test file -----------------------------------------

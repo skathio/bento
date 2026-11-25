@@ -58,6 +58,19 @@ export function KindDot({ kind, className = "" }: { kind: PackKind; className?: 
   return <span className={`size-2 shrink-0 rounded-full ${DOT_CLASS[kind]} ${className}`} aria-hidden="true" />;
 }
 
+const UNIT = /^(.*\d)\s+((?:g|ml|L|mg)(?:\/h)?)$/;
+
+/**
+ * A target such as "1000 mg/h" with its unit set smaller than the number, the way measurements
+ * are printed, so a four-digit value still fits a narrow compartment on one line. A value with
+ * no unit ("Optional", "To thirst") shows as it is. The text read out is unchanged.
+ */
+export function Measure({ value }: { value: string }) {
+  const m = UNIT.exec(value);
+  if (!m) return <>{value}</>;
+  return <>{m[1]}<span className="ml-[0.2em] text-[0.6em] font-medium">{m[2]}</span></>;
+}
+
 /** The per-hour targets as shown in the plan panel and the phone's targets bar. */
 export function targetValues(t: Targets): { carbs: string; fluid: string; sodium: string } {
   return {

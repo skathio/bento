@@ -487,6 +487,17 @@ test("at 1280 px the head of the plan panel is sticky and stays in view while th
   assertStickyHead(render({ durationMin: 300, refillEveryMin: 60 }, PRESETS.map((p) => p.id)));
 });
 
+// In the narrower desktop plan column four compartments in a row leave about 94 px each at
+// 1024 px, too little for a value like "1000 mg/h"; from lg up they sit two by two.
+test("at 1280 px the target compartments sit two by two, not four in a row", () => {
+  const page = render({ tempC: 33, durationMin: 300, sweatSodiumMgL: 1800 });
+  const label = planText(page, "Caffeine", "the caffeine compartment");
+  const grid = must(lineage(label.parent).find((el) => /grid/.test(style(el, "display", DESKTOP) ?? "")), "the compartment grid");
+  const tracks = style(grid, "grid-template-columns", DESKTOP) ?? "";
+  assert.match(tracks, /repeat\(2,/, `two tracks at 1280 px, got "${tracks}"`);
+  assert.match(style(grid, "grid-template-columns", 768) ?? "", /repeat\(4,/, "four in a row where the panel spans the page");
+});
+
 test("at 1280 px no sticky phone bar is shown", () => {
   for (const page of [render(FULL[0]), render({ tempC: MAX_C })]) {
     const bar = phoneBar(page);
