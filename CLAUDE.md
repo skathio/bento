@@ -74,9 +74,12 @@ tools/build.ts         runs the Vite build
   changes). It runs on every PR, on push to `main` touching site, tools, tests, package or config files,
   and by hand. Its `deploy` job, skipped on PRs and off `main`, then publishes `dist/` with hashira's
   `pages-deploy`. There is no release or tag step: merging to `main` deploys.
-- hashira is pinned to the 40-character SHA of a release tag's commit, twice in `ci.yml` (the
-  `static-webapp-ci.yml` and `pages-deploy` `uses:` lines), and both must match: `tests/ci.test.ts`
-  fails otherwise. v3 has no `library_ref` input, so a Dependabot bump of both pins needs no hand fix.
+- hashira is referenced by its moving major tag `@v3`, twice in `ci.yml` (the `static-webapp-ci.yml`
+  and `pages-deploy` `uses:` lines), so new v3.x releases apply with no PR. Both refs must stay on the
+  same tag (`tests/ci.test.ts` fails otherwise) and move to `@v4` together when it ships.
+- The org's `ci-required` ruleset requires the `ci / passed` check (hashira's aggregate job, which also
+  writes the one CI summary comment on a PR) and a branch up to date with `main`. Keep the caller job
+  id `ci`, and keep its `contents: read` and `pull-requests: write` grants.
 - `homepage.yml` pings the skathio homepage when `.github/homepage.json` or `site/favicon.svg` changes on
   `main`.
 

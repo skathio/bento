@@ -49,5 +49,6 @@ docs/                 Methodology and the research prompt
 ## Deploy
 
 `ci.yml` runs the hashira static-webapp CI (build, tests with coverage, scan suite, quality gate) on every
-pull request, and also deploys `dist/` to GitHub Pages on every push to `main` that touches the site. In
+pull request, and also deploys `dist/` to GitHub Pages on every push to `main` that touches the site. Its
+`ci / passed` check is the one a pull request needs to merge. In
 the repo settings, set Pages to deploy from **GitHub Actions**. The site uses a relative base, so it works under `/bento/`.

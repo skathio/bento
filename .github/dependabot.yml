@@ -1,7 +1,7 @@
 # Weekly update PRs for Bento's GitHub Actions pins and npm packages.
 #
-# The two hashira pins in ci.yml must name the same SHA (tests/ci.test.ts);
-# Dependabot bumps both in one PR.
+# The two hashira refs in ci.yml track the moving @v3 tag and must stay on the
+# same tag (tests/ci.test.ts); when hashira ships v4, Dependabot moves both in one PR.
 version: 2
 updates:
   - package-ecosystem: github-actions
